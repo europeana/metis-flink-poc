@@ -200,3 +200,4 @@ README.html
 .idea
 .exercism
 *enrichment*.xml
+/config/
