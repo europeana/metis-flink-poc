@@ -1,0 +1,59 @@
+package eu.europeana.cloud.flink.common;
+
+import eu.europeana.cloud.copieddependencies.DpsRecord;
+import eu.europeana.cloud.copieddependencies.DpsRecordDeserializer;
+import eu.europeana.cloud.copieddependencies.TopologyPropertyKeys;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.connector.kafka.source.KafkaSource;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.log4j.Logger;
+
+public class AbstractJob {
+
+  private static final Logger LOGGER = Logger.getLogger(AbstractJob.class);
+  protected static final Properties properties = new Properties();
+  protected final StreamExecutionEnvironment flinkEnvironment;
+  protected final String jobName;
+  protected final DataStreamSource<DpsRecord> source;
+
+
+  protected AbstractJob(String propertyPath) {
+    try (FileInputStream fileInput = new FileInputStream(propertyPath)) {
+      properties.load(fileInput);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    jobName = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
+    flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
+
+    source = createSource();
+  }
+
+  private DataStreamSource<DpsRecord> createSource() {
+    final KafkaSource<DpsRecord> kafkaSource;
+    KafkaRecordDeserializationSchema<DpsRecord> deserializationSchema = KafkaRecordDeserializationSchema.valueOnly(
+        DpsRecordDeserializer.class);
+    kafkaSource = KafkaSource.<DpsRecord>builder()
+                             .setBootstrapServers(properties.getProperty(TopologyPropertyKeys.BOOTSTRAP_SERVERS))
+                             .setTopics(properties.getProperty(TopologyPropertyKeys.TOPICS).split(","))
+                             .setGroupId(jobName)
+                             .setStartingOffsets(OffsetsInitializer.latest())
+                             .setDeserializer(deserializationSchema)
+                             .setProperty("enable.auto.commit", "true")
+                             .build();
+
+    DataStreamSource<DpsRecord> dataSource = flinkEnvironment.fromSource(kafkaSource,
+        WatermarkStrategy.noWatermarks(), "Record URLs source");
+    return dataSource;
+  }
+
+  public void execute() throws Exception {
+    flinkEnvironment.execute(jobName);
+  }
+}

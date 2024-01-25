@@ -13,6 +13,8 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flink-version>1.18.1</flink-version>
+        <ecloud.version>12-SNAPSHOT</ecloud.version>
+        <metis.version>12-SNAPSHOT</metis.version>
     </properties>
 
     <repositories>
@@ -47,6 +49,12 @@
             <version>1.2.12</version>
         </dependency>
         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.15.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-java</artifactId>
             <version>${flink-version}</version>
@@ -68,10 +76,18 @@
             <artifactId>flink-java</artifactId>
             <version>${flink-version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-kafka</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+
+
         <dependency>
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-enrichment-client</artifactId>
-            <version>12-SNAPSHOT</version>
+            <version>${metis.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.maven.surefire</groupId>
@@ -88,9 +104,34 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>eu.europeana.metis</groupId>
+            <artifactId>metis-normalization</artifactId>
+            <version>${metis.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.maven.surefire</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.springframework</artifactId>
+                    <groupId>*</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.springframework.security</artifactId>
+                    <groupId>*</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>eu.europeana.cloud</groupId>
+            <artifactId>ecloud-service-mcs-rest-client-java</artifactId>
+            <version>${ecloud.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
