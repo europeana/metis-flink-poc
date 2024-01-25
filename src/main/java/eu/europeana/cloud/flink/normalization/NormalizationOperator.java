@@ -29,6 +29,7 @@ public class NormalizationOperator extends RichMapFunction<FileTuple, FileTuple>
     }
 
     String outputXml = normalizationResult.getNormalizedRecordInEdmXml();
+   // Thread.sleep(10000);
     return fileTuple.toBuilder().fileContent(outputXml.getBytes(StandardCharsets.UTF_8)).build();
   }
 

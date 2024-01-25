@@ -10,8 +10,10 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.log4j.Logger;
 
 public class AbstractJob {
@@ -33,6 +35,7 @@ public class AbstractJob {
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
 
     source = createSource();
+    flinkEnvironment.enableCheckpointing(1000, CheckpointingMode.AT_LEAST_ONCE);
   }
 
   private DataStreamSource<DpsRecord> createSource() {
@@ -43,9 +46,8 @@ public class AbstractJob {
                              .setBootstrapServers(properties.getProperty(TopologyPropertyKeys.BOOTSTRAP_SERVERS))
                              .setTopics(properties.getProperty(TopologyPropertyKeys.TOPICS).split(","))
                              .setGroupId(jobName)
-                             .setStartingOffsets(OffsetsInitializer.latest())
+                             .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.LATEST))
                              .setDeserializer(deserializationSchema)
-                             .setProperty("enable.auto.commit", "true")
                              .build();
 
     DataStreamSource<DpsRecord> dataSource = flinkEnvironment.fromSource(kafkaSource,
