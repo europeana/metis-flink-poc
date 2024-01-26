@@ -23,8 +23,9 @@ import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 
 /*
@@ -76,7 +77,7 @@ import org.apache.log4j.Logger;
 public class FlinkPoC {
 
 
-  private static final Logger LOGGER = LogManager.getRootLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(FlinkPoC.class);
   private static final Properties enrichmentProperties = new Properties();
   private static Enricher enricher;
   private static StreamExecutionEnvironment flinkEnvironment;

@@ -1,9 +1,10 @@
 package eu.europeana.cloud.flink.normalization;
 
+import eu.europeana.cloud.flink.common.NotificationOperator;
 import eu.europeana.cloud.flink.common.RetrieveFileOperator;
 import eu.europeana.cloud.flink.common.AbstractJob;
-import eu.europeana.cloud.flink.common.tuples.FileTuple;
 import eu.europeana.cloud.flink.common.FileTuplePrintOperator;
+import eu.europeana.cloud.flink.common.tuples.NotificationTuple;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 
 public class NormalizationJob extends AbstractJob {
@@ -11,10 +12,12 @@ public class NormalizationJob extends AbstractJob {
   public NormalizationJob(String propertyPath) throws Exception {
     super(propertyPath);
 
-    SingleOutputStreamOperator<FileTuple> resultStream = source.map(new RetrieveFileOperator(properties))
-                                                               .map(new FileTuplePrintOperator("BEFORE NORMALIZATION"))
-                                                               .map(new NormalizationOperator())
-                                                               .map(new FileTuplePrintOperator("AFTER NORMALIZATION"));
+    SingleOutputStreamOperator<NotificationTuple> resultStream = source.map(new RetrieveFileOperator(properties))
+                                                                       .map(new FileTuplePrintOperator("BEFORE NORMALIZATION"))
+                                                                       .map(new NormalizationOperator())
+                                                                       .map(new FileTuplePrintOperator("AFTER NORMALIZATION"))
+                                                                       .map(new NotificationOperator());
+    addSink(resultStream);
   }
 
   public static void main(String[] args) throws Exception {

@@ -44,9 +44,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.12</version>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.22.1</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -82,8 +82,17 @@
             <artifactId>flink-connector-kafka</artifactId>
             <version>1.17.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-scala_2.12</artifactId>
+            <version>1.18.1</version>
+        </dependency>
 
-
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-cassandra_2.12</artifactId>
+            <version>1.16.3</version>
+        </dependency>
         <dependency>
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-enrichment-client</artifactId>
@@ -100,6 +109,10 @@
                 <exclusion>
                     <artifactId>org.springframework.security</artifactId>
                     <groupId>*</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.apache.logging.log4j</artifactId>
+                    <groupId>log4j-slf4j-impl</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -119,6 +132,10 @@
                 <exclusion>
                     <artifactId>org.springframework.security</artifactId>
                     <groupId>*</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.apache.logging.log4j</artifactId>
+                    <groupId>log4j-slf4j-impl</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
