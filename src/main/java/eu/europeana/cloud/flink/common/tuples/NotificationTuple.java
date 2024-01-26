@@ -5,6 +5,7 @@ import com.datastax.driver.mapping.annotations.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
@@ -12,6 +13,7 @@ import org.apache.flink.types.RowKind;
 @Table(keyspace = "flink_poc", name="results")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class NotificationTuple {
   @Column(name = "task_id")

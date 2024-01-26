@@ -3,7 +3,7 @@ package eu.europeana.cloud.flink.common;
 import eu.europeana.cloud.copieddependencies.DpsRecord;
 import eu.europeana.cloud.copieddependencies.DpsRecordDeserializer;
 import eu.europeana.cloud.copieddependencies.TopologyPropertyKeys;
-import eu.europeana.cloud.flink.common.sink.TupleSinkBuilder;
+import eu.europeana.cloud.flink.common.sink.PojoSinkBuilder;
 import eu.europeana.cloud.flink.common.tuples.NotificationTuple;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public class AbstractJob {
 
 
   protected void addSink(SingleOutputStreamOperator<NotificationTuple> resultStream) throws Exception {
-    new TupleSinkBuilder(properties).build(resultStream);
+    new PojoSinkBuilder(properties).build(resultStream);
     LOGGER.info("Created Cassandra Sink.");
   }
 
