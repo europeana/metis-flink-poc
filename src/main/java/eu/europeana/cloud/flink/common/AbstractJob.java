@@ -1,10 +1,10 @@
 package eu.europeana.cloud.flink.common;
 
-import eu.europeana.cloud.copieddependencies.DpsRecord;
-import eu.europeana.cloud.copieddependencies.DpsRecordDeserializer;
-import eu.europeana.cloud.copieddependencies.TopologyPropertyKeys;
 import eu.europeana.cloud.flink.common.sink.PojoSinkBuilder;
 import eu.europeana.cloud.flink.common.tuples.NotificationTuple;
+import eu.europeana.cloud.service.dps.DpsRecord;
+import eu.europeana.cloud.service.dps.DpsRecordDeserializer;
+import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;

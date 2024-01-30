@@ -19,14 +19,18 @@ public class NotificationTuple {
 
   @Column(name = "task_id")
   private long taskId;
+
   @Column(name = "resource")
   private String resource;
+
   @Column(name = "result_resource")
   private String resultResource;
-  @Column(name = "info_text")
-  private String infoText = "";
 
-  private String jobName = "";
+  @Column(name = "info_text")
+  @Builder.Default
+  private String infoText= "";
+
+  private String jobName;
 
   private boolean markedAsDeleted;
 

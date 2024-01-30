@@ -1,8 +1,8 @@
 package eu.europeana.cloud.flink.common.mcs;
 
-import static eu.europeana.cloud.copieddependencies.TopologyPropertyKeys.MCS_URL;
-import static eu.europeana.cloud.copieddependencies.TopologyPropertyKeys.TOPOLOGY_USER_NAME;
-import static eu.europeana.cloud.copieddependencies.TopologyPropertyKeys.TOPOLOGY_USER_PASSWORD;
+import static eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys.MCS_URL;
+import static eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys.TOPOLOGY_USER_NAME;
+import static eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys.TOPOLOGY_USER_PASSWORD;
 
 import eu.europeana.cloud.flink.common.tuples.FileTuple;
 import eu.europeana.cloud.flink.common.tuples.FileTuple.FileTupleBuilder;

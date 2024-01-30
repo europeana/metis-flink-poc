@@ -1,6 +1,7 @@
 package eu.europeana.cloud.flink.common.sink;
 
-import static java.lang.Integer.*;
+import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
+import static java.lang.Integer.parseInt;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
@@ -9,7 +10,6 @@ import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.QueryOptions;
 import eu.europeana.cloud.cassandra.CassandraConnectionProvider;
 import eu.europeana.cloud.cassandra.CassandraConnectionProviderSingleton;
-import eu.europeana.cloud.copieddependencies.TopologyPropertyKeys;
 import java.util.Properties;
 import org.apache.flink.streaming.connectors.cassandra.ClusterBuilder;
 
