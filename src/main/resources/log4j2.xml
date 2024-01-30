@@ -32,5 +32,6 @@
         <Root level="warn">
             <AppenderRef ref="STDOUT"/>
         </Root>
+        <Logger name="eu.europeana.cloud.flink" level="info"/>
     </Loggers>
 </Configuration>

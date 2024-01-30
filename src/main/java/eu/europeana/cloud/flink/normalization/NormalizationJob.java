@@ -1,30 +1,30 @@
 package eu.europeana.cloud.flink.normalization;
 
-import eu.europeana.cloud.flink.common.NotificationOperator;
-import eu.europeana.cloud.flink.common.RetrieveFileOperator;
 import eu.europeana.cloud.flink.common.AbstractJob;
-import eu.europeana.cloud.flink.common.FileTuplePrintOperator;
-import eu.europeana.cloud.flink.common.tuples.NotificationTuple;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import eu.europeana.cloud.flink.common.ReadParamsOperator;
+import eu.europeana.cloud.flink.common.mcs.AddToRevisionOperator;
+import eu.europeana.cloud.flink.common.mcs.RetrieveFileOperator;
+import eu.europeana.cloud.flink.common.mcs.WriteRecordOperator;
+import eu.europeana.cloud.flink.common.notifications.NotificationOperator;
 
 public class NormalizationJob extends AbstractJob {
 
   public NormalizationJob(String propertyPath) throws Exception {
     super(propertyPath);
-
-    SingleOutputStreamOperator<NotificationTuple> resultStream = source.map(new RetrieveFileOperator(properties))
-                                                                       .map(new FileTuplePrintOperator("BEFORE NORMALIZATION"))
-                                                                       .map(new NormalizationOperator())
-                                                                       .map(new FileTuplePrintOperator("AFTER NORMALIZATION"))
-                                                                       .map(new NotificationOperator());
-    addSink(resultStream);
+    source.map(new ReadParamsOperator(properties))
+          .map(new RetrieveFileOperator(properties))
+          .map(new NormalizationOperator())
+          .map(new WriteRecordOperator(properties))
+          .map(new AddToRevisionOperator(properties))
+          .keyBy(tuple -> tuple.getTaskId())
+          .map(new NotificationOperator("normalization_job", properties));
   }
 
   public static void main(String[] args) throws Exception {
     if (args.length != 1) {
-      System.out.println("exactly one parameter, containing configuration property file path needed!");
+      System.out.println("exactly one parameter, containing configuration property file path is needed!");
     }
-    NormalizationJob topoplogy = new NormalizationJob(args[0]);
-    topoplogy.execute();
+    NormalizationJob job = new NormalizationJob(args[0]);
+    job.execute();
   }
 }

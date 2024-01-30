@@ -1,21 +1,20 @@
 package eu.europeana.cloud.flink.common.tuples;
 
-
 import lombok.Builder;
 import lombok.Value;
 
 @Value
-@Builder(toBuilder = true)
-public class FileTuple {
+@Builder
+public class TaskRecordTuple {
+
   private TaskParams taskParams;
   private RecordParams recordParams;
-  private byte[] fileContent;
-
-  public String getResourceUrl() {
-    return recordParams.getResourceUrl();
-  }
 
   public boolean isMarkedAsDeleted() {
     return recordParams.isMarkedAsDeleted();
+  }
+
+  public String getFileUrl() {
+    return recordParams.getResourceUrl();
   }
 }

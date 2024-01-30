@@ -54,15 +54,13 @@ public class AbstractJob {
                              .setDeserializer(deserializationSchema)
                              .build();
 
-    DataStreamSource<DpsRecord> dataSource = flinkEnvironment.fromSource(kafkaSource,
-        WatermarkStrategy.noWatermarks(), "Record URLs source");
-    return dataSource;
+    return flinkEnvironment.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(), "Record URLs source");
   }
 
 
   protected void addSink(SingleOutputStreamOperator<NotificationTuple> resultStream) throws Exception {
-    new PojoSinkBuilder(properties).build(resultStream);
-    LOGGER.info("Created Cassandra Sink.");
+        new PojoSinkBuilder(properties).build(resultStream);
+        LOGGER.info("Created Cassandra Sink.");
   }
 
 

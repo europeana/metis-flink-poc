@@ -7,19 +7,19 @@ public class FileTuplePrintOperator implements MapFunction<FileTuple, FileTuple>
 
   private final String info;
 
-  public FileTuplePrintOperator(){
+  public FileTuplePrintOperator() {
     this("");
   }
 
   public FileTuplePrintOperator(String info) {
-    this.info=info;
+    this.info = info;
   }
 
   @Override
   public FileTuple map(FileTuple file) throws Exception {
-    System.out.print(info+" " + file.getFileUrl() + " -> ");
+    System.out.print(info + " " + file.getResourceUrl() + " -> ");
 
-    if (file.getDpsRecord().isMarkedAsDeleted()) {
+    if (file.isMarkedAsDeleted()) {
       System.out.println(" DELETED ");
     } else {
       System.out.println(new String(file.getFileContent()));

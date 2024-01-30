@@ -7,6 +7,8 @@ import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.QueryOptions;
+import eu.europeana.cloud.cassandra.CassandraConnectionProvider;
+import eu.europeana.cloud.cassandra.CassandraConnectionProviderSingleton;
 import eu.europeana.cloud.copieddependencies.TopologyPropertyKeys;
 import java.util.Properties;
 import org.apache.flink.streaming.connectors.cassandra.ClusterBuilder;
@@ -29,6 +31,15 @@ public class CassandraClusterBuilder extends ClusterBuilder {
                       properties.getProperty(TopologyPropertyKeys.CASSANDRA_SECRET_TOKEN))
                   .withProtocolVersion(ProtocolVersion.V3)
                   .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM)).build();
+  }
+
+  public static CassandraConnectionProvider getCassandraConnectionProvider(Properties properties) {
+    return CassandraConnectionProviderSingleton.getCassandraConnectionProvider(
+        properties.getProperty(TopologyPropertyKeys.CASSANDRA_HOSTS),
+        Integer.parseInt(properties.getProperty(TopologyPropertyKeys.CASSANDRA_PORT, "9042")),
+        properties.getProperty(TopologyPropertyKeys.CASSANDRA_KEYSPACE_NAME),
+        properties.getProperty(TopologyPropertyKeys.CASSANDRA_USERNAME),
+        properties.getProperty(TopologyPropertyKeys.CASSANDRA_SECRET_TOKEN));
   }
 }
 
