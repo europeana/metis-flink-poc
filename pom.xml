@@ -146,6 +146,29 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>eu.europeana.metis</groupId>
+            <artifactId>metis-harvesting</artifactId>
+            <version>${metis.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.maven.surefire</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.springframework</artifactId>
+                    <groupId>*</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.springframework.security</artifactId>
+                    <groupId>*</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.apache.logging.log4j</artifactId>
+                    <groupId>log4j-slf4j-impl</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>eu.europeana.cloud</groupId>
             <artifactId>ecloud-service-mcs-rest-client-java</artifactId>
             <version>${ecloud.version}</version>
