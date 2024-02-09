@@ -1,5 +1,6 @@
 package eu.europeana.cloud.flink.oai.source;
 
+import eu.europeana.cloud.flink.oai.OAITaskInformation;
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
@@ -15,18 +16,20 @@ import org.apache.flink.core.io.InputStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OAIReader implements SourceReader<OaiRecordHeader, OAISplit> {
+public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(OAIReader.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OAIHeadersReader.class);
 
   private static final int DEFAULT_RETRIES = 3;
   private static final int SLEEP_TIME = 5000;
   private final SourceReaderContext context;
+  private final OAITaskInformation taskInformation;
   private boolean active;
   private CompletableFuture<Void> available = new CompletableFuture();
 
-  public OAIReader(SourceReaderContext context) {
+  public OAIHeadersReader(SourceReaderContext context, OAITaskInformation taskInformation) {
     this.context=context;
+    this.taskInformation=taskInformation;
     LOGGER.info("Created oai reader.");
   }
 
@@ -44,10 +47,9 @@ public class OAIReader implements SourceReader<OaiRecordHeader, OAISplit> {
       return InputStatus.NOTHING_AVAILABLE;
     }
 
-    OaiHarvest harvestToBeExecuted = new OaiHarvest("https://metis-repository-rest.test.eanadev.org/repository/oai",
-        "edm", "ecloud_e2e_tests");
     OaiHarvester harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
-    OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(harvestToBeExecuted);
+
+    OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(taskInformation.getOaiHarvest());
     headerIterator.forEach(oaiHeader -> {
       output.collect(oaiHeader);
 //      try {

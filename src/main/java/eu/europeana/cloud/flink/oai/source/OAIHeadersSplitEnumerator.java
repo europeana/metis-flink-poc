@@ -8,13 +8,13 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OAISplitEnumerator implements SplitEnumerator<OAISplit, Void> {
+public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, Void> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(OAISplitEnumerator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OAIHeadersSplitEnumerator.class);
   private final SplitEnumeratorContext<OAISplit> context;
   private boolean finished;
 
-  public OAISplitEnumerator(SplitEnumeratorContext<OAISplit> context) {
+  public OAIHeadersSplitEnumerator(SplitEnumeratorContext<OAISplit> context) {
     this.context = context;
   }
 

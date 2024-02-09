@@ -1,4 +1,4 @@
-package eu.europeana.cloud.flink.oai;
+package eu.europeana.cloud.flink.oai.utils;
 
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import org.apache.flink.api.common.functions.MapFunction;

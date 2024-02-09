@@ -1,5 +1,6 @@
 package eu.europeana.cloud.flink.oai.source;
 
+import eu.europeana.cloud.flink.oai.OAITaskInformation;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import java.io.IOException;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -12,7 +13,14 @@ import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-public class OAISource implements Source<OaiRecordHeader, OAISplit, Void>, ResultTypeQueryable<OaiRecordHeader> {
+public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>, ResultTypeQueryable<OaiRecordHeader> {
+
+  private final OAITaskInformation taskInformation;
+
+  public OAIHeadersSource(OAITaskInformation taskInformation) {
+    this.taskInformation=taskInformation;
+  }
+
   @Override
   public Boundedness getBoundedness() {
     //TODO Check if it is proper value
@@ -22,18 +30,18 @@ public class OAISource implements Source<OaiRecordHeader, OAISplit, Void>, Resul
   @Override
   public SplitEnumerator<OAISplit, Void> createEnumerator(
       SplitEnumeratorContext<OAISplit> enumContext) throws Exception {
-    return new OAISplitEnumerator(enumContext);
+    return new OAIHeadersSplitEnumerator(enumContext);
   }
 
   @Override
   public SourceReader<OaiRecordHeader, OAISplit> createReader(SourceReaderContext readerContext) throws Exception {
-    return new OAIReader(readerContext);
+    return new OAIHeadersReader(readerContext, taskInformation);
   }
 
   @Override
   public SplitEnumerator<OAISplit, Void> restoreEnumerator(SplitEnumeratorContext<OAISplit> enumContext, Void checkpoint)
       throws Exception {
-    return new OAISplitEnumerator(enumContext);
+    return new OAIHeadersSplitEnumerator(enumContext);
   }
 
   @Override

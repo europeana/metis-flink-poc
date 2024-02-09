@@ -183,7 +183,11 @@
             <artifactId>ecloud-service-dps-storm-common</artifactId>
             <version>${ecloud.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>eu.europeana.cloud</groupId>
+            <artifactId>harvesting-commons</artifactId>
+            <version>${ecloud.version}</version>
+        </dependency>
     </dependencies>
 
 </project>
