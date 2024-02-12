@@ -8,8 +8,7 @@ import lombok.Value;
 @Builder
 public class RecordTuple {
 
-  private String europeanaId;
-  private Instant timestamp;
+  private String recordId;
   private byte[] fileContent;
 
 }

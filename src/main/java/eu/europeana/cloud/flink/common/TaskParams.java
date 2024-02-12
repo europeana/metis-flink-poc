@@ -13,7 +13,9 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
-public class TaskInformation implements Serializable {
+public class TaskParams implements Serializable {
+
+   private String datasetId;
 
    @Builder.Default
    private UUID executionId= UUIDs.timeBased();

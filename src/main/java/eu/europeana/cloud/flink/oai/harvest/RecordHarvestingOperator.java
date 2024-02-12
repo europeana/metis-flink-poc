@@ -2,7 +2,7 @@ package eu.europeana.cloud.flink.oai.harvest;
 
 import eu.europeana.cloud.common.utils.Clock;
 import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
-import eu.europeana.cloud.flink.oai.OAITaskInformation;
+import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
@@ -19,13 +19,13 @@ public class RecordHarvestingOperator extends RichMapFunction<OaiRecordHeader, H
 
   private static final int DEFAULT_RETRIES = 3;
   private static final int SLEEP_TIME = 5000;
-  private final OAITaskInformation taskInformation;
+  private final OAITaskParams taskParams;
 
   private transient OaiHarvester harvester;
 
 
-  public RecordHarvestingOperator(OAITaskInformation taskInformation) {
-    this.taskInformation = taskInformation;
+  public RecordHarvestingOperator(OAITaskParams taskParams) {
+    this.taskParams = taskParams;
   }
 
   @Override
@@ -38,8 +38,8 @@ public class RecordHarvestingOperator extends RichMapFunction<OaiRecordHeader, H
       throw new NullPointerException("Records id is null!");
     }
 
-    String endpointLocation = taskInformation.getOaiHarvest().getRepositoryUrl();
-    String metadataPrefix = taskInformation.getOaiHarvest().getMetadataPrefix();
+    String endpointLocation = taskParams.getOaiHarvest().getRepositoryUrl();
+    String metadataPrefix = taskParams.getOaiHarvest().getMetadataPrefix();
 
     var oaiRecord = harvester.harvestRecord(new OaiRepository(endpointLocation, metadataPrefix), recordId);
 

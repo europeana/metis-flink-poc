@@ -1,9 +1,8 @@
 package eu.europeana.cloud.flink.oai.source;
 
-import eu.europeana.cloud.flink.oai.OAITaskInformation;
+import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;
-import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeaderIterator;
@@ -23,13 +22,13 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   private static final int DEFAULT_RETRIES = 3;
   private static final int SLEEP_TIME = 5000;
   private final SourceReaderContext context;
-  private final OAITaskInformation taskInformation;
+  private final OAITaskParams taskParams;
   private boolean active;
   private CompletableFuture<Void> available = new CompletableFuture();
 
-  public OAIHeadersReader(SourceReaderContext context, OAITaskInformation taskInformation) {
-    this.context=context;
-    this.taskInformation=taskInformation;
+  public OAIHeadersReader(SourceReaderContext context, OAITaskParams taskParams) {
+    this.context = context;
+    this.taskParams = taskParams;
     LOGGER.info("Created oai reader.");
   }
 
@@ -42,21 +41,21 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   public InputStatus pollNext(ReaderOutput<OaiRecordHeader> output) throws Exception {
     LOGGER.info("Executed poll: active: {}", active);
     if (!active) {
-      available=new CompletableFuture<>();
+      available = new CompletableFuture<>();
       context.sendSplitRequest();
       return InputStatus.NOTHING_AVAILABLE;
     }
 
     OaiHarvester harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
 
-    OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(taskInformation.getOaiHarvest());
+    OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(taskParams.getOaiHarvest());
     headerIterator.forEach(oaiHeader -> {
       output.collect(oaiHeader);
-//      try {
-//        Thread.sleep(3000);
-//      } catch (InterruptedException e) {
-//        throw new RuntimeException(e);
-//      }
+      //      try {
+      //        Thread.sleep(3000);
+      //      } catch (InterruptedException e) {
+      //        throw new RuntimeException(e);
+      //      }
       return IterationResult.CONTINUE;
     });
     headerIterator.close();

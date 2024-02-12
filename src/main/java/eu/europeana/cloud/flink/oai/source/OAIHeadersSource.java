@@ -1,6 +1,6 @@
 package eu.europeana.cloud.flink.oai.source;
 
-import eu.europeana.cloud.flink.oai.OAITaskInformation;
+import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import java.io.IOException;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -15,10 +15,10 @@ import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>, ResultTypeQueryable<OaiRecordHeader> {
 
-  private final OAITaskInformation taskInformation;
+  private final OAITaskParams taskParams;
 
-  public OAIHeadersSource(OAITaskInformation taskInformation) {
-    this.taskInformation=taskInformation;
+  public OAIHeadersSource(OAITaskParams taskParams) {
+    this.taskParams = taskParams;
   }
 
   @Override
@@ -35,7 +35,7 @@ public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>
 
   @Override
   public SourceReader<OaiRecordHeader, OAISplit> createReader(SourceReaderContext readerContext) throws Exception {
-    return new OAIHeadersReader(readerContext, taskInformation);
+    return new OAIHeadersReader(readerContext, taskParams);
   }
 
   @Override

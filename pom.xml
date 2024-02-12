@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-cassandra_2.12</artifactId>
-            <version>1.16.3</version>
+            <version>3.1.0-1.17</version>
         </dependency>
         <dependency>
             <groupId>eu.europeana.metis</groupId>
@@ -188,6 +188,12 @@
             <artifactId>harvesting-commons</artifactId>
             <version>${ecloud.version}</version>
         </dependency>
+        <dependency>
+            <groupId>eu.europeana.cloud</groupId>
+            <artifactId>ecloud-service-dps-storm-topologies-validation</artifactId>
+            <version>${ecloud.version}</version>
+        </dependency>
+
     </dependencies>
 
 </project>
