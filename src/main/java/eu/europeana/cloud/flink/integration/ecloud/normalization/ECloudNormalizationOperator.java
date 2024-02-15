@@ -1,4 +1,4 @@
-package eu.europeana.cloud.flink.normalization;
+package eu.europeana.cloud.flink.integration.ecloud.normalization;
 
 import eu.europeana.cloud.flink.common.tuples.FileTuple;
 import eu.europeana.normalization.Normalizer;
@@ -10,9 +10,9 @@ import org.apache.flink.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NormalizationOperator extends RichMapFunction<FileTuple, FileTuple> {
+public class ECloudNormalizationOperator extends RichMapFunction<FileTuple, FileTuple> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(NormalizationOperator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ECloudNormalizationOperator.class);
 
   private transient NormalizerFactory normalizerFactory;
 
