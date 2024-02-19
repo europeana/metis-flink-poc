@@ -10,6 +10,6 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class IntermediateTaskParams extends TaskParams {
+public class FollowingTaskParams extends TaskParams {
   private UUID previousStepId;
 }
