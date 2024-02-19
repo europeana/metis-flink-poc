@@ -1,10 +1,8 @@
 package eu.europeana.cloud.flink.integration.ecloud.normalization;
 
 import eu.europeana.cloud.flink.common.tuples.FileTuple;
-import eu.europeana.normalization.Normalizer;
-import eu.europeana.normalization.NormalizerFactory;
-import eu.europeana.normalization.model.NormalizationResult;
-import java.nio.charset.StandardCharsets;
+import eu.europeana.cloud.flink.common.tuples.RecordTuple;
+import eu.europeana.cloud.flink.normalization.NormalizationOperator;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.slf4j.Logger;
@@ -14,7 +12,7 @@ public class ECloudNormalizationOperator extends RichMapFunction<FileTuple, File
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ECloudNormalizationOperator.class);
 
-  private transient NormalizerFactory normalizerFactory;
+  private transient NormalizationOperator operator;
 
   @Override
   public FileTuple map(FileTuple inputTuple) throws Exception {
@@ -22,23 +20,15 @@ public class ECloudNormalizationOperator extends RichMapFunction<FileTuple, File
       return inputTuple;
     }
 
-    final Normalizer normalizer = normalizerFactory.getNormalizer();
-    String document = new String(inputTuple.getFileContent(), StandardCharsets.UTF_8);
+    RecordTuple result = operator.map(
+        RecordTuple.builder().recordId(inputTuple.getResourceUrl()).fileContent(inputTuple.getFileContent()).build());
 
-    NormalizationResult normalizationResult = normalizer.normalize(document);
-    if (normalizationResult.getErrorMessage() != null) {
-      throw new RuntimeException(
-          "Unable to normalize file: " + inputTuple.getResourceUrl() + " - " + normalizationResult.getErrorMessage());
-    }
-
-    String outputXml = normalizationResult.getNormalizedRecordInEdmXml();
-    FileTuple resultTuple = inputTuple.toBuilder().fileContent(outputXml.getBytes(StandardCharsets.UTF_8)).build();
-    LOGGER.debug("Normalized file: {}", inputTuple.getResourceUrl());
-    return resultTuple;
+    return inputTuple.toBuilder().fileContent(result.getFileContent()).build();
   }
 
   public void open(Configuration parameters) {
-    normalizerFactory = new NormalizerFactory();
-    LOGGER.info("Created normalization operator.");
+    operator = new NormalizationOperator();
+    operator.open(parameters);
+    LOGGER.info("Created ECloudNormalization operator.");
   }
 }
