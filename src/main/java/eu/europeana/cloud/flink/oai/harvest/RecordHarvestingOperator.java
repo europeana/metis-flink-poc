@@ -1,6 +1,9 @@
 package eu.europeana.cloud.flink.oai.harvest;
 
+import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
+
 import eu.europeana.cloud.common.utils.Clock;
+import eu.europeana.cloud.flink.common.tuples.ErrorTuple;
 import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
 import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.harvesting.HarvesterFactory;
@@ -8,12 +11,13 @@ import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import eu.europeana.metis.harvesting.oaipmh.OaiRepository;
 import java.time.Instant;
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RecordHarvestingOperator extends RichMapFunction<OaiRecordHeader, HarvestedRecordTuple> {
+public class RecordHarvestingOperator extends ProcessFunction<OaiRecordHeader, HarvestedRecordTuple> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RecordHarvestingOperator.class);
 
@@ -29,7 +33,26 @@ public class RecordHarvestingOperator extends RichMapFunction<OaiRecordHeader, H
   }
 
   @Override
-  public HarvestedRecordTuple map(OaiRecordHeader header) throws Exception {
+  public void processElement(OaiRecordHeader header, ProcessFunction<OaiRecordHeader, HarvestedRecordTuple>.Context ctx,
+      Collector<HarvestedRecordTuple> out) {
+    try {
+      out.collect(harvestRecordsContent(header));
+    } catch (Exception e) {
+      LOGGER.warn("Error while harvesting record content from source for OAI identifier: {}",
+          header.getOaiIdentifier(), e);
+      ctx.output(ERROR_STREAM_TAG, ErrorTuple.builder()
+                                             .recordId("/oaiIdentifier/" + header.getOaiIdentifier())
+                                             .exception(e)
+                                             .build());
+    }
+  }
+
+  private HarvestedRecordTuple harvestRecordsContent(OaiRecordHeader header) throws Exception {
+    //     //Uncomment for error handling tests
+    //    if(header.getOaiIdentifier().equals("ecloud_e2e_tests_NLS____NLS2__RS_23_______0QIWEFD_sr")){
+    //      throw new HttpConnectTimeoutException("Time passsed!");
+    //    }
+
     Instant harvestingStartTime = Instant.now();
     String recordId = header.getOaiIdentifier();
     LOGGER.info("Starting harvesting for: {}", recordId);

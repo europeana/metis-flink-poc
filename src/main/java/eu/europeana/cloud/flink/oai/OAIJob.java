@@ -1,14 +1,19 @@
 package eu.europeana.cloud.flink.oai;
 
+import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
+import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
+import eu.europeana.cloud.flink.common.tuples.RecordTuple;
 import eu.europeana.cloud.flink.oai.harvest.DeletedOutFilter;
 import eu.europeana.cloud.flink.oai.harvest.RecordHarvestingOperator;
 import eu.europeana.cloud.flink.simpledb.DbEntityCreatingOperator;
+import eu.europeana.cloud.flink.simpledb.DbErrorEntityCreatingOperator;
 import eu.europeana.cloud.flink.simpledb.RecordExecutionEntity;
 import eu.europeana.cloud.flink.oai.harvest.IdAssigningOperator;
 import eu.europeana.cloud.flink.oai.source.OAIHeadersSource;
+import eu.europeana.cloud.flink.simpledb.RecordExecutionExceptionLogEntity;
 import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
@@ -28,35 +33,39 @@ public class OAIJob {
   protected final StreamExecutionEnvironment flinkEnvironment;
 
   public OAIJob(Properties properties, OAITaskParams taskParams) throws Exception {
+    LOGGER.info("Creating {} for execution: {}, with execution parameters: {}",
+        getClass().getSimpleName(), taskParams.getExecutionId(), taskParams);
+
     String jobName = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
 
     DataStreamSource<OaiRecordHeader> source = flinkEnvironment.fromSource(
         new OAIHeadersSource(taskParams), WatermarkStrategy.noWatermarks(), "OAI Source").setParallelism(1);
 
-    SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
+    SingleOutputStreamOperator<HarvestedRecordTuple> harvestedRecordsStream =
         source.filter(new DeletedOutFilter())
-              .map(new RecordHarvestingOperator(taskParams))
-              .map(new IdAssigningOperator(taskParams))
-              .map(new DbEntityCreatingOperator(jobName, taskParams));
+              .process(new RecordHarvestingOperator(taskParams));
 
-    CassandraSink.addSink(resultStream)
-                 .setClusterBuilder(new CassandraClusterBuilder(properties))
-                 .build();
+    SingleOutputStreamOperator<RecordTuple> recordsWithAssignedIdStream =
+        harvestedRecordsStream.process(new IdAssigningOperator(taskParams));
+
+    SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
+        recordsWithAssignedIdStream.map(new DbEntityCreatingOperator(jobName, taskParams));
+
+    CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
+
+    CassandraSink.addSink(resultStream).setClusterBuilder(cassandraClusterBuilder).build();
+
+    SingleOutputStreamOperator<RecordExecutionExceptionLogEntity> errorStream =
+        harvestedRecordsStream.getSideOutput(ERROR_STREAM_TAG)
+                              .union(recordsWithAssignedIdStream.getSideOutput(ERROR_STREAM_TAG))
+                              .map(new DbErrorEntityCreatingOperator(jobName, taskParams));
+
+    CassandraSink.addSink(errorStream).setClusterBuilder(cassandraClusterBuilder).build();
   }
 
 
   public static void main(String[] args) throws Exception {
-    //    OaiHarvest oaiHarvest = new OaiHarvest("https://metis-repository-rest.test.eanadev.org/repository/oai", "edm",
-    //        "ecloud_e2e_tests");
-    //
-    //    OAIHarvestingTaskInformation taskParams =
-    //        OAIHarvestingTaskInformation.builder()
-    //                                    .oaiHarvest(oaiHarvest)
-    //                                    .metisDatasetId("1")
-    //                                    .executionId(UUIDs.timeBased())
-    //                                    .build();
-
     ParameterTool tool = ParameterTool.fromArgs(args);
     OaiHarvest oaiHarvest = new OaiHarvest(
         tool.getRequired("oaiRepositoryUrl"),
