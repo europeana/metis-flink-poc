@@ -66,7 +66,7 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public List<OAISplit> snapshotState(long checkpointId) {
-    LOGGER.info("Snapsho state: {}", checkpointId);
+    LOGGER.info("Snapshotted state: {}", checkpointId);
     return null;
   }
 
@@ -86,7 +86,7 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public void notifyNoMoreSplits() {
-    LOGGER.info("Notify no more splits");
+    LOGGER.info("Notified: no more splits");
   }
 
   @Override

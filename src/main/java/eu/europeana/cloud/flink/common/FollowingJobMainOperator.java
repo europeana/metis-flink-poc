@@ -13,17 +13,19 @@ public abstract class FollowingJobMainOperator extends ProcessFunction<RecordTup
   public static final OutputTag<ErrorTuple> ERROR_STREAM_TAG = new OutputTag<>("error-stream") {
   };
   private static final Logger LOGGER = LoggerFactory.getLogger(FollowingJobMainOperator.class);
+
   @Override
   public final void processElement(RecordTuple tuple,
       ProcessFunction<RecordTuple, RecordTuple>.Context context, Collector<RecordTuple> out) {
     try {
       out.collect(map(tuple));
+      LOGGER.debug("Processed record, id: {}", tuple.getRecordId());
     } catch (Exception e) {
       LOGGER.warn("{} error: {}", getClass().getName(), tuple.getRecordId(), e);
       context.output(ERROR_STREAM_TAG, ErrorTuple.builder()
-                          .recordId(tuple.getRecordId())
-                          .exception(e)
-                          .build());
+                                                 .recordId(tuple.getRecordId())
+                                                 .exception(e)
+                                                 .build());
     }
   }
 

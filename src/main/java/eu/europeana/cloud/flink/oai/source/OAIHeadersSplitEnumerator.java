@@ -26,9 +26,12 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, Void
 
   @Override
   public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
-    LOGGER.info("Split request subtaskId: {}, host: {}");
+    LOGGER.info("Handling split request, subtaskId: {}, host: {}");
     if (!finished) {
       context.assignSplit(new OAISplit(), subtaskId);
+      LOGGER.info("Assigned split for subtaskId: {}, host: {}");
+    }else{
+      LOGGER.info("There are no more splits to assign, for subtaskId: {}, host: {}");
     }
     finished = true;
   }
@@ -40,7 +43,7 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, Void
 
   @Override
   public void addReader(int subtaskId) {
-    LOGGER.info("Add reader subtaskId:{}", subtaskId);
+    LOGGER.info("Added reader for subtaskId: {}", subtaskId);
   }
 
   @Override

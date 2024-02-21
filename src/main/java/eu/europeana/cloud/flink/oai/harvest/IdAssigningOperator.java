@@ -47,9 +47,8 @@ public class IdAssigningOperator extends ProcessFunction<HarvestedRecordTuple, R
     //    }
 
     EuropeanaGeneratedIdsMap europeanaIdentifier = getEuropeanaIdentifier(tuple);
-    //    tuple.addParameter(PluginParameterKeys.ADDITIONAL_LOCAL_IDENTIFIER, europeanaIdentifier.getSourceProvidedChoAbout());
-    //    tuple.addParameter(PluginParameterKeys.CLOUD_LOCAL_IDENTIFIER, europeanaIdentifier.getEuropeanaGeneratedId());
     String europeanaId = europeanaIdentifier.getEuropeanaGeneratedId();
+    LOGGER.debug("Assigned Europeana id: {}, for external record: {}", europeanaId, tuple.getExternalId());
     return RecordTuple.builder()
                       .recordId(europeanaId)
                       .fileContent(tuple.getFileContent())

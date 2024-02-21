@@ -55,7 +55,7 @@ public class RecordHarvestingOperator extends ProcessFunction<OaiRecordHeader, H
 
     Instant harvestingStartTime = Instant.now();
     String recordId = header.getOaiIdentifier();
-    LOGGER.info("Starting harvesting for: {}", recordId);
+    LOGGER.debug("Starting harvesting for: {}", recordId);
 
     if (recordId == null) {
       throw new NullPointerException("Records id is null!");
@@ -72,7 +72,7 @@ public class RecordHarvestingOperator extends ProcessFunction<OaiRecordHeader, H
                                                       .fileContent(oaiRecord.getRecord().readAllBytes())
                                                       .build();
 
-    LOGGER.info("Harvesting finished in: {}ms for {}", Clock.millisecondsSince(harvestingStartTime), recordId);
+    LOGGER.debug("Harvesting finished in: {}ms for {}", Clock.millisecondsSince(harvestingStartTime), recordId);
     return result;
   }
 

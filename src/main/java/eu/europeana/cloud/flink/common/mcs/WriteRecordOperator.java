@@ -39,6 +39,8 @@ public class WriteRecordOperator extends RichMapFunction<FileTuple, WrittenRecor
     if (!tuple.isMarkedAsDeleted()) {
       URI newUri = createRepresentationAndUploadFile(taskParams, recordParams, tuple.getFileContent());
       result.newResourceUrl(newUri.toString());
+    }else{
+      LOGGER.debug("Omitted deleted representation, url: {}", tuple.getResourceUrl());
     }
     return result.build();
   }
@@ -58,8 +60,7 @@ public class WriteRecordOperator extends RichMapFunction<FileTuple, WrittenRecor
         taskParams.getOutputMimeType()
     );
 
-    LOGGER.info("Saved file in MCS url: {}", savedFileUrl);
-    LOGGER.debug("Saved file content: {}", fileContent);
+    LOGGER.debug("Saved file in MCS, url: {}, content: {}", savedFileUrl, fileContent);
     return savedFileUrl;
   }
 

@@ -32,7 +32,6 @@ public class ValidationOperator extends FollowingJobMainOperator {
   public RecordTuple map(RecordTuple tuple) throws Exception {
     byte[] sortedContent = reorderFileContent(tuple.getFileContent());
     validate(sortedContent);
-    LOGGER.info("Validated tuple: {}", tuple.getRecordId());
     return tuple;
   }
 
