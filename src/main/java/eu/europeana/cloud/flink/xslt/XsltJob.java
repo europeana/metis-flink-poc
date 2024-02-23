@@ -18,7 +18,7 @@ public class XsltJob extends AbstractFollowingJob<XsltParams> {
   }
 
   @Override
-  protected XsltOperator createMainOperator(XsltParams taskParams) {
+  protected XsltOperator createMainOperator(Properties properties, XsltParams taskParams) {
     return new XsltOperator(taskParams);
   }
 

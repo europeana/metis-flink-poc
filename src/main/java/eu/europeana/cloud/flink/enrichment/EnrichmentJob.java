@@ -1,4 +1,4 @@
-package eu.europeana.cloud.flink.normalization;
+package eu.europeana.cloud.flink.enrichment;
 
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
@@ -10,19 +10,18 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NormalizationJob extends AbstractFollowingJob<FollowingTaskParams> {
+public class EnrichmentJob extends AbstractFollowingJob<FollowingTaskParams> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(NormalizationJob.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EnrichmentJob.class);
 
-  public NormalizationJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
-    super(properties,taskParams);
+  public EnrichmentJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
+    super(properties, taskParams);
   }
 
   @Override
-  protected NormalizationOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {
-    return new NormalizationOperator();
+  protected EnrichmentOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {
+    return new EnrichmentOperator(properties);
   }
-
 
   public static void main(String[] args) throws Exception {
 
@@ -33,9 +32,8 @@ public class NormalizationJob extends AbstractFollowingJob<FollowingTaskParams> 
         .previousStepId(UUID.fromString(tool.getRequired("previousStepId")))
         .build();
 
-    NormalizationJob job = new NormalizationJob(readProperties(tool.getRequired("configurationFilePath")), taskParams);
+    EnrichmentJob job = new EnrichmentJob(readProperties(tool.getRequired("configurationFilePath")), taskParams);
     job.execute();
   }
-
 
 }

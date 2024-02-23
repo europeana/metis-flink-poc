@@ -19,7 +19,7 @@ public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
   }
 
   @Override
-  protected FollowingJobMainOperator createMainOperator(ValidationTaskParams taskParams) {
+  protected FollowingJobMainOperator createMainOperator(Properties properties, ValidationTaskParams taskParams) {
     return new ValidationOperator(taskParams);
   }
 

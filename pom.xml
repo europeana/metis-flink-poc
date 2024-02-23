@@ -100,6 +100,11 @@
             <version>3.1.0-1.17</version>
         </dependency>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <version>4.1.94.Final</version>
+        </dependency>
+        <dependency>
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-enrichment-client</artifactId>
             <version>${metis.version}</version>

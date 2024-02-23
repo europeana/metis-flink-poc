@@ -35,7 +35,7 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
 
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator())
-              .process(createMainOperator(taskParams));
+              .process(createMainOperator(properties, taskParams));
 
     SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
         processStream.map(new DbEntityCreatingOperator(jobName, taskParams));
@@ -54,7 +54,7 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
 
   }
 
-  protected abstract FollowingJobMainOperator createMainOperator(PARAMS_TYPE taskParams);
+  protected abstract FollowingJobMainOperator createMainOperator(Properties properties, PARAMS_TYPE taskParams);
 
   protected void execute() throws Exception {
     flinkEnvironment.execute();
