@@ -53,7 +53,6 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
                                     .recordId(tuple.getRecordId())
                                     .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
                                     .build();
-    LOGGER.info("Enriched file: {}", tuple.getRecordId());
     return result;
   }
 

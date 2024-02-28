@@ -30,7 +30,6 @@ public class NormalizationOperator extends FollowingJobMainOperator {
     RecordTuple resultTuple = RecordTuple.builder().recordId(tuple.getRecordId())
                                          .fileContent(outputXml.getBytes(StandardCharsets.UTF_8))
                                          .build();
-    LOGGER.info("Normalized file: {}", tuple.getRecordId());
     return resultTuple;
   }
 
