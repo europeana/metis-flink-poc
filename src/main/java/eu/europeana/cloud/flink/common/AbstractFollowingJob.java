@@ -31,7 +31,11 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     String jobName = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
 
-    DataStreamSource<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams);
+    DataStreamSource<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams)
+        //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
+        //TODO The command rebalance does not work for this source for some reasons. To investigate
+        .setParallelism(1);
+
 
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator())
