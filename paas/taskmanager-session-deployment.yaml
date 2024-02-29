@@ -14,6 +14,15 @@ spec:
         app: flink
         component: taskmanager
     spec:
+      initContainers:
+        - name: copy-conf
+          image: registry.paas.psnc.pl/base/busybox:1.28
+          command: [ "/bin/sh","-c","cp /conf-copy/* /opt/flink/conf;" ]
+          volumeMounts:
+            - name: flink-config-volume
+              mountPath: /conf-copy
+            - name: conf-volume
+              mountPath: /opt/flink/conf
       containers:
         - name: taskmanager
           image: apache/flink:1.18.1-scala_2.12
@@ -28,15 +37,22 @@ spec:
             periodSeconds: 60
           volumeMounts:
             - name: flink-config-volume
-              mountPath: /opt/flink/conf/
-          securityContext:
-            runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+              mountPath: /conf-copy
+            - name: conf-volume
+              mountPath: /opt/flink/conf
+            - name: log-volume
+              mountPath: /opt/flink/log
       volumes:
         - name: flink-config-volume
           configMap:
             name: flink-config
+            defaultMode: 0777
             items:
               - key: flink-conf.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
+        - emptyDir: { }
+          name: log-volume
+        - emptyDir: { }
+          name: conf-volume
