@@ -7,12 +7,12 @@ metadata:
 data:
   flink-conf.yaml: |+
     jobmanager.rpc.address: flink-jobmanager
-    taskmanager.numberOfTaskSlots: 2
+    taskmanager.numberOfTaskSlots: 4
     blob.server.port: 6124
     jobmanager.rpc.port: 6123
     taskmanager.rpc.port: 6122
     jobmanager.memory.process.size: 1600m
-    taskmanager.memory.process.size: 1728m
+    taskmanager.memory.process.size: 2728m
     parallelism.default: 2
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
