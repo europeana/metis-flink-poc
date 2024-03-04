@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: flink-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: flink-client
+  serviceName: flink-client
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: flink-client
+    spec:
+      containers:
+        - name: flink-client
+          image: apache/flink:1.18.1-scala_2.12
+          command: [ "/bin/sh","-c","while true; do sleep 60; done;" ]
+          volumeMounts:
+            - name: deployments
+              mountPath: /deployments
+            - name: log-volume
+              mountPath: /opt/flink/log
+      volumes:
+        - name: deployments
+          persistentVolumeClaim:
+            claimName: deployments
+        - emptyDir: { }
+          name: log-volume
