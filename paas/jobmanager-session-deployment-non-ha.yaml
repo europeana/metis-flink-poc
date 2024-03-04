@@ -14,15 +14,6 @@ spec:
         app: flink
         component: jobmanager
     spec:
-      initContainers:
-        - name: copy-conf
-          image: registry.paas.psnc.pl/base/busybox:1.28
-          command: [ "/bin/sh","-c","cp /conf-copy/* /opt/flink/conf;" ]
-          volumeMounts:
-            - name: flink-config-volume
-              mountPath: /conf-copy
-            - name: conf-volume
-              mountPath: /opt/flink/conf
       containers:
         - name: jobmanager
           image: apache/flink:1.18.1-scala_2.12
@@ -41,11 +32,16 @@ spec:
             periodSeconds: 60
           volumeMounts:
             - name: flink-config-volume
-              mountPath: /conf-copy
-            - name: conf-volume
               mountPath: /opt/flink/conf
             - name: log-volume
               mountPath: /opt/flink/log
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2048Mi
+            requests:
+              cpu: "1"
+              memory: 2048Mi
       volumes:
         - name: flink-config-volume
           configMap:
