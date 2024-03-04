@@ -1,0 +1,19 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    haproxy.router.openshift.io/ip_whitelist: 150.254.169.100/32
+  labels:
+    app: apache-dashboard
+  name: apache-dashboard
+spec:
+  host: flink-dashboard.apps.dcw1.paas.psnc.pl
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+  to:
+    kind: Service
+    name: apache-dashboard
+    weight: 100
+  wildcardPolicy: None
