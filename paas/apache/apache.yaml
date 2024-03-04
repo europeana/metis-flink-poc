@@ -1,0 +1,72 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  generation: 1
+  labels:
+    app: apache-dashboard
+  name: apache-dashboard
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    app: apache-dashboard
+    deploymentconfig: apache-dashboard
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftWebConsole
+      creationTimestamp: null
+      labels:
+        app: apache-dashboard
+        deploymentconfig: apache-dashboard
+    spec:
+      containers:
+      - image: registry.paas.psnc.pl/base/centos/httpd-24-centos7
+        imagePullPolicy: Always
+        name: ecloud-apache-dashboard
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 9080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 300m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+          - mountPath: /etc/httpd/conf.d/dashboard.conf
+            name: dashboard-conf-file
+            subPath: dashboard.conf
+          - mountPath: /etc/httpd/.htpasswd
+            name: htpasswd-file
+            subPath: .htpasswd
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            name: apache-dashboard
+          name: dashboard-conf-file
+        - secret:
+            secretName: htpasswd
+          name: htpasswd-file
+  test: false
+  triggers:
+  - type: ConfigChange
