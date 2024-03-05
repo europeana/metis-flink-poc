@@ -52,6 +52,9 @@ spec:
           - mountPath: /etc/httpd/conf.d/dashboard.conf
             name: dashboard-conf-file
             subPath: dashboard.conf
+          - mountPath: /etc/httpd/conf.d/mod_security.conf
+            name: mod-security-conf-file
+            subPath: mod_security.conf
           - mountPath: /etc/httpd/.htpasswd
             name: htpasswd-file
             subPath: .htpasswd
@@ -64,6 +67,9 @@ spec:
         - configMap:
             name: apache-dashboard
           name: dashboard-conf-file
+        - configMap:
+            name: apache-mod-security
+          name: mod-security-conf-file
         - secret:
             secretName: htpasswd
           name: htpasswd-file
