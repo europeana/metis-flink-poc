@@ -14,6 +14,7 @@ data:
     jobmanager.memory.process.size: 1600m
     taskmanager.memory.process.size: 2728m
     parallelism.default: 2
+    env.java.opts.all: "--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED"
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO
