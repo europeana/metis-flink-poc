@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: jobmanager
-          image: apache/flink:1.18.1-scala_2.12
+          image: registry.paas.psnc.pl/ecloud-poc/flink:1.18.1-java21_poc
+          imagePullPolicy: Always
           args: ["jobmanager"]
           ports:
             - containerPort: 6123

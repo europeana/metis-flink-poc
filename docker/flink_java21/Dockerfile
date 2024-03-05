@@ -16,7 +16,7 @@
 # limitations under the License.
 ###############################################################################
 
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 
 # Install dependencies
 RUN set -ex; \
@@ -89,6 +89,7 @@ RUN set -ex; \
 
 # Configure container
 COPY docker-entrypoint.sh /
+RUN chmod 755 /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 EXPOSE 6123 8081
 CMD ["help"]
