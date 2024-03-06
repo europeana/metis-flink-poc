@@ -15,6 +15,7 @@ data:
     taskmanager.memory.process.size: 2728m
     parallelism.default: 2
     env.java.opts.all: "--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED"
+    web.upload.dir: /web-upload
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO

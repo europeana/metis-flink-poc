@@ -25,9 +25,14 @@ spec:
               mountPath: /deployments
             - name: log-volume
               mountPath: /opt/flink/log
+            - name: jobs-config
+              mountPath: /jobs-config
       volumes:
         - name: deployments
           persistentVolumeClaim:
             claimName: deployments
         - emptyDir: { }
           name: log-volume
+        - secret:
+            secretName: jobs-config
+          name: jobs-config
