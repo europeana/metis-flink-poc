@@ -1,2 +1,2 @@
-Tags: 1.18.1-scala_2.12-java17, 1.18-scala_2.12-java17, scala_2.12-java17, 1.18.1-java17, 1.18-java17, java17
+Tags: flink:1.18.1-java21_poc
 Architectures: amd64,arm64v8
