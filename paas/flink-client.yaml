@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: flink-client
-          image: registry.paas.psnc.pl/ecloud-poc/flink:1.18.1-java21_poc
+          image: registry.paas.psnc.pl/ecloud-poc/flink-node-poc
           imagePullPolicy: Always
           command: [ "/bin/sh","-c","while true; do sleep 5; done;" ]
           volumeMounts:
