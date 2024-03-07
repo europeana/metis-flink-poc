@@ -14,6 +14,9 @@ public class MediaJob extends AbstractFollowingJob<FollowingTaskParams> {
   public MediaJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
     super(properties, taskParams);
   }
+  protected String mainOperatorName() {
+    return "Extract media";
+  }
 
   @Override
   protected MediaOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {

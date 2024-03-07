@@ -27,7 +27,12 @@ public class SimpleDbCassandraSourceBuilder {
         createQuery(taskParams),
         () -> new Option[]{Option.saveNullFields(true)});
 
-    return flinkEnvironment.fromSource(cassandraSource, WatermarkStrategy.noWatermarks(), "Cassandra records source");
+    return flinkEnvironment.fromSource(cassandraSource, WatermarkStrategy.noWatermarks(), createCassandraSourceName(taskParams));
+  }
+
+  @NotNull
+  private static String createCassandraSourceName(FollowingTaskParams taskParams) {
+    return "Cassandra records (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId()+")";
   }
 
   @NotNull

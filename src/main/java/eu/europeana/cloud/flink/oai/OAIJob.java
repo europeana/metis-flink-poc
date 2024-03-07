@@ -1,5 +1,6 @@
 package eu.europeana.cloud.flink.oai;
 
+import static eu.europeana.cloud.flink.common.AbstractFollowingJob.createJobName;
 import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
@@ -32,26 +33,28 @@ public class OAIJob {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OAIJob.class);
   protected final StreamExecutionEnvironment flinkEnvironment;
+  private final String jobName;
 
   public OAIJob(Properties properties, OAITaskParams taskParams) throws Exception {
     LOGGER.info("Creating {} for execution: {}, with execution parameters: {}",
         getClass().getSimpleName(), taskParams.getExecutionId(), taskParams);
 
-    final String jobName = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
+    final String jobType = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
+    jobName = createJobName(taskParams, jobType);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
 
     DataStreamSource<OaiRecordHeader> source = flinkEnvironment.fromSource(
-        new OAIHeadersSource(taskParams), WatermarkStrategy.noWatermarks(), "OAI Source").setParallelism(1);
+        new OAIHeadersSource(taskParams), WatermarkStrategy.noWatermarks(), createSourceName(taskParams)).setParallelism(1);
 
     SingleOutputStreamOperator<HarvestedRecordTuple> harvestedRecordsStream =
-        source.filter(new DeletedRecordFilter())
-              .process(new RecordHarvestingOperator(taskParams));
+        source.filter(new DeletedRecordFilter()).name("Filter not deleted")
+              .process(new RecordHarvestingOperator(taskParams)).name("Harvest record");
 
     SingleOutputStreamOperator<RecordTuple> recordsWithAssignedIdStream =
-        harvestedRecordsStream.process(new IdAssigningOperator(taskParams));
+        harvestedRecordsStream.process(new IdAssigningOperator(taskParams)).name("Assign europeana id");
 
     SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
-        recordsWithAssignedIdStream.map(new DbEntityCreatingOperator(jobName, taskParams));
+        recordsWithAssignedIdStream.map(new DbEntityCreatingOperator(jobType, taskParams)).name("Create DB entity");
 
     CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
 
@@ -60,11 +63,16 @@ public class OAIJob {
     SingleOutputStreamOperator<RecordExecutionExceptionLogEntity> errorStream =
         harvestedRecordsStream.getSideOutput(ERROR_STREAM_TAG)
                               .union(recordsWithAssignedIdStream.getSideOutput(ERROR_STREAM_TAG))
-                              .map(new DbErrorEntityCreatingOperator(jobName, taskParams));
+                              .map(new DbErrorEntityCreatingOperator(jobType, taskParams)).name("Create exception DB entity");
 
     CassandraSink.addSink(errorStream).setClusterBuilder(cassandraClusterBuilder).build();
   }
 
+  private String createSourceName(OAITaskParams taskParams) {
+    return "OAI (url: "+taskParams.getOaiHarvest().getRepositoryUrl()
+        +", set: "+taskParams.getOaiHarvest().getSetSpec()+
+        ", format: "+taskParams.getOaiHarvest().getMetadataPrefix() +")";
+  }
 
   public static void main(String[] args) throws Exception {
     ParameterTool tool = ParameterTool.fromArgs(args);
@@ -83,7 +91,7 @@ public class OAIJob {
   }
 
   private void execute() throws Exception {
-    flinkEnvironment.execute();
+    flinkEnvironment.execute(jobName);
   }
 
 }

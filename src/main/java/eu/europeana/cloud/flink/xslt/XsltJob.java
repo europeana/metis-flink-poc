@@ -13,6 +13,9 @@ public class XsltJob extends AbstractFollowingJob<XsltParams> {
   public XsltJob(Properties properties, XsltParams taskParams) throws Exception {
     super(properties, taskParams);
   }
+  protected String mainOperatorName() {
+    return "Transform with XSLT";
+  }
 
   @Override
   protected XsltOperator createMainOperator(Properties properties, XsltParams taskParams) {

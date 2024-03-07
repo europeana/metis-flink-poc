@@ -20,6 +20,10 @@ public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
     super(properties, taskParams);
   }
 
+  protected String mainOperatorName() {
+    return "Index"; //TODO into preview.
+  }
+
   @Override
   protected IndexingOperator createMainOperator(Properties properties, IndexingTaskParams taskParams) {
     return new IndexingOperator(taskParams);
