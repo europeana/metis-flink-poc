@@ -17,6 +17,9 @@ public class NormalizationJob extends AbstractFollowingJob<FollowingTaskParams> 
   public NormalizationJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
     super(properties,taskParams);
   }
+  protected String mainOperatorName() {
+    return "Normalize";
+  }
 
   @Override
   protected NormalizationOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {

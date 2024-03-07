@@ -17,6 +17,9 @@ public class EnrichmentJob extends AbstractFollowingJob<FollowingTaskParams> {
   public EnrichmentJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
     super(properties, taskParams);
   }
+  protected String mainOperatorName() {
+    return "Enrich";
+  }
 
   @Override
   protected EnrichmentOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {

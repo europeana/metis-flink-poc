@@ -1,4 +1,4 @@
-package eu.europeana.cloud.flink.common;
+package eu.europeana.cloud.flink.integration.ecloud.common;
 
 import eu.europeana.cloud.flink.common.sink.PojoSinkBuilder;
 import eu.europeana.cloud.flink.common.tuples.NotificationTuple;
@@ -20,16 +20,16 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AbstractJob {
+public class AbstractECloudJob {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJob.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractECloudJob.class);
   protected static final Properties properties = new Properties();
   protected final StreamExecutionEnvironment flinkEnvironment;
   protected final String jobName;
   protected final DataStreamSource<DpsRecord> source;
 
 
-  protected AbstractJob(String propertyPath) {
+  protected AbstractECloudJob(String propertyPath) {
     try (FileInputStream fileInput = new FileInputStream(propertyPath)) {
       properties.load(fileInput);
     } catch (IOException e) {
