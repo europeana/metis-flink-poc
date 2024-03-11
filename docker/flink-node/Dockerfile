@@ -23,4 +23,8 @@ RUN  /install.sh
 RUN apt-get update && apt-get install -y \
     zip \
     unzip \
+    lsof \
     && rm -rf /var/lib/apt/lists/*
+
+COPY jattach /usr/bin/
+RUN chmod 755 /usr/bin/jattach
