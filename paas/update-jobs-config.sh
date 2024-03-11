@@ -6,5 +6,7 @@ echo Checking project...
 oc project | grep ecloud-flink-poc
 echo Project OK
 
+set +e
 oc delete secret jobs-config
-oc create secret generic jobs-config --from-file=config/jobs
+set -e
+oc create secret generic jobs-config --from-file=../config/jobs
