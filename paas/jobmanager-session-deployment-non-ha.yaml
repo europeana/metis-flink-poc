@@ -40,6 +40,8 @@ spec:
               mountPath: /jobs-config
             - name: web-upload
               mountPath: /web-upload
+            - name: working-directory
+              mountPath: /working-directory
           resources:
             limits:
               cpu: "2"
@@ -64,6 +66,9 @@ spec:
         - secret:
             secretName: jobs-config
           name: jobs-config
+        - name: working-directory
+          persistentVolumeClaim:
+            claimName: job-manager-work
         - name: web-upload
           persistentVolumeClaim:
             claimName: web-upload

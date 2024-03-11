@@ -16,6 +16,10 @@ data:
     parallelism.default: 2
     env.java.opts.all: "--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED"
     web.upload.dir: /web-upload
+    jobstore.expiration-time: 172800
+    jobstore.type: File
+    process.jobmanager.working-dir: /working-directory
+    jobmanager.resource-id: poc1
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO

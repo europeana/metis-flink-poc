@@ -9,6 +9,7 @@ echo Project OK
 #Configure volumes
 oc apply -f deployments-volume.yaml
 oc apply -f web-upload-volume.yaml
+oc apply -f job-manager-working-volume.yaml
 # Configuration and service definition
 oc apply -f flink-configuration-configmap.yaml
 oc apply -f jobmanager-service.yaml
