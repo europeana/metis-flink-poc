@@ -15,6 +15,6 @@ CREATE TABLE execution_record_exception_log
     EXECUTION_ID   varchar,
     EXECUTION_NAME varchar,
     RECORD_ID      varchar,
-    EXCEPTION    text,
+    EXCEPTION      text,
     PRIMARY KEY ((DATASET_ID, EXECUTION_ID), RECORD_ID)
 );

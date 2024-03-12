@@ -1,5 +1,7 @@
 package eu.europeana.cloud.flink.simpledb;
 
+import static java.util.Objects.requireNonNull;
+
 import com.datastax.driver.mapping.Mapper.Option;
 import eu.europeana.cloud.flink.common.FollowingTaskParams;
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
@@ -30,11 +32,11 @@ public class SimpleDbCassandraSourceBuilder {
 
   @NotNull
   private static String createQuery(FollowingTaskParams taskParams) {
-    String query = "select * from flink_poc.execution_record where dataset_id= '"
-        + taskParams.getDatasetId()
-        + "' and execution_id='"
-        + taskParams.getPreviousStepId()
-        + "';";
+    String query = String.format(
+        "select * from flink_poc.execution_record where dataset_id= '%s' and execution_id='%s';",
+        requireNonNull(taskParams.getDatasetId()),
+        requireNonNull(taskParams.getPreviousStepId()));
+
     LOGGER.info("Query: {}", query);
     return query;
   }

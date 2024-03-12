@@ -1,5 +1,6 @@
 package eu.europeana.cloud.flink.validation;
 
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
@@ -7,12 +8,8 @@ import eu.europeana.cloud.flink.common.FollowingJobMainOperator;
 import java.util.Properties;
 import java.util.UUID;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ValidationJob.class);
 
   public ValidationJob(Properties properties, ValidationTaskParams taskParams) throws Exception {
     super(properties, taskParams);
@@ -26,16 +23,16 @@ public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
   public static void main(String[] args) throws Exception {
 
     ParameterTool tool = ParameterTool.fromArgs(args);
-    String metisDatasetId = tool.getRequired("datasetId");
+    String metisDatasetId = tool.getRequired(DATASET_ID);
     ValidationTaskParams taskParams = ValidationTaskParams
         .builder()
         .datasetId(metisDatasetId)
-        .previousStepId(UUID.fromString(tool.getRequired("previousStepId")))
-        .schemaName(tool.getRequired("schemaName"))
-        .rootLocation(tool.getRequired("rootLocation"))
-        .schematronLocation(tool.get("schematronLocation"))
+        .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
+        .schemaName(tool.getRequired(SCHEMA_NAME))
+        .rootLocation(tool.getRequired(ROOT_LOCATION))
+        .schematronLocation(tool.get(SCHEMATRON_LOCATION))
         .build();
-    ValidationJob job = new ValidationJob(readProperties(tool.getRequired("configurationFilePath")), taskParams);
+    ValidationJob job = new ValidationJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
     job.execute();
   }
 

@@ -24,7 +24,7 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   private final SourceReaderContext context;
   private final OAITaskParams taskParams;
   private boolean active;
-  private CompletableFuture<Void> available = new CompletableFuture();
+  private CompletableFuture<Void> available = new CompletableFuture<>();
 
   public OAIHeadersReader(SourceReaderContext context, OAITaskParams taskParams) {
     this.context = context;

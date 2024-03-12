@@ -21,7 +21,7 @@ public abstract class FollowingJobMainOperator extends ProcessFunction<RecordTup
       out.collect(map(tuple));
       LOGGER.debug("Processed record, id: {}", tuple.getRecordId());
     } catch (Exception e) {
-      LOGGER.warn("{} error: {}", getClass().getName(), tuple.getRecordId(), e);
+      LOGGER.warn("{} exception: {}", getClass().getName(), tuple.getRecordId(), e);
       context.output(ERROR_STREAM_TAG, ErrorTuple.builder()
                                                  .recordId(tuple.getRecordId())
                                                  .exception(e)

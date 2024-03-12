@@ -39,15 +39,13 @@ public class MediaOperator extends FollowingJobMainOperator {
     final EnrichedRdf enrichedRdf;
     enrichedRdf = getEnrichedRdf(rdfBytes);
 
-    RdfResourceEntry resourceMainThumbnail;
-    resourceMainThumbnail = rdfDeserializer.getMainThumbnailResourceForMediaExtraction(rdfBytes);
+    RdfResourceEntry resourceMainThumbnail = rdfDeserializer.getMainThumbnailResourceForMediaExtraction(rdfBytes);
     boolean hasMainThumbnail = false;
     if (resourceMainThumbnail != null) {
       hasMainThumbnail = processResourceWithoutThumbnail(resourceMainThumbnail,
           tuple.getRecordId(), enrichedRdf, mediaExtractor);
     }
-    List<RdfResourceEntry> remainingResourcesList;
-    remainingResourcesList = rdfDeserializer.getRemainingResourcesForMediaExtraction(rdfBytes);
+    List<RdfResourceEntry> remainingResourcesList = rdfDeserializer.getRemainingResourcesForMediaExtraction(rdfBytes);
     if (hasMainThumbnail) {
       remainingResourcesList.forEach(entry ->
           processResourceWithThumbnail(entry, tuple.getRecordId(), enrichedRdf,

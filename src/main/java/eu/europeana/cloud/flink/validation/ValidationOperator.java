@@ -30,8 +30,7 @@ public class ValidationOperator extends FollowingJobMainOperator {
 
   @Override
   public RecordTuple map(RecordTuple tuple) throws Exception {
-    byte[] sortedContent = reorderFileContent(tuple.getFileContent());
-    validate(sortedContent);
+    validate(getSortedFileContent(tuple.getFileContent()));
     return tuple;
   }
 
@@ -47,7 +46,7 @@ public class ValidationOperator extends FollowingJobMainOperator {
 
   }
 
-  private byte[] reorderFileContent(byte[] fileContent) throws TransformationException {
+  private byte[] getSortedFileContent(byte[] fileContent) throws TransformationException {
     StringWriter writer = transformer.transform(fileContent, null);
     return writer.toString().getBytes(StandardCharsets.UTF_8);
   }
@@ -56,7 +55,7 @@ public class ValidationOperator extends FollowingJobMainOperator {
     Properties validationProperties = new Properties();
     PropertyFileLoader.loadPropertyFile(VALIDATION_PROPERTIES_FILE, "", validationProperties);
     validationService = new ValidationExecutionService(validationProperties);
-    String sorterFileLocation = validationProperties.get(ValidationTopologyPropertiesKeys.EDM_SORTER_FILE_LOCATION).toString();
+    final String sorterFileLocation = validationProperties.get(ValidationTopologyPropertiesKeys.EDM_SORTER_FILE_LOCATION).toString();
     LOGGER.info("Preparing XsltTransformer for {}", sorterFileLocation);
     transformer = new XsltTransformer(sorterFileLocation);
     LOGGER.info("Created validation operator.");

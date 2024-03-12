@@ -1,5 +1,6 @@
 package eu.europeana.cloud.flink.indexing;
 
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
@@ -11,15 +12,9 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(IndexingJob.class);
 
   public IndexingJob(Properties properties, IndexingTaskParams taskParams) throws Exception {
     super(properties, taskParams);
@@ -33,25 +28,25 @@ public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
   public static void main(String[] args) throws Exception {
 
     ParameterTool tool = ParameterTool.fromArgs(args);
-    String metisDatasetId = tool.getRequired("datasetId");
+    String metisDatasetId = tool.getRequired(DATASET_ID);
 
     IndexingTaskParams taskParams = IndexingTaskParams
         .builder()
         .datasetId(metisDatasetId)
         .metisDatasetId(metisDatasetId)
-        .previousStepId(UUID.fromString(tool.getRequired("previousStepId")))
-        .database(TargetIndexingDatabase.valueOf(tool.getRequired("targetIndexingDatabase")))
-        .recordDate(Optional.ofNullable(tool.get("recordDate")).map(DateHelper::parseISODate).orElse(new Date()))
-        .preserveTimestamps(tool.getBoolean("preserveTimestamps", false))
-        .performRedirects(tool.getBoolean("performRedirects", false))
-        .datasetIdsForRedirection(Optional.ofNullable(tool.get("datasetIdsToRedirectFrom"))
+        .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
+        .database(TargetIndexingDatabase.valueOf(tool.getRequired(TARGET_INDEXING_DATABASE)))
+        .recordDate(Optional.ofNullable(tool.get(RECORD_DATE)).map(DateHelper::parseISODate).orElse(new Date()))
+        .preserveTimestamps(tool.getBoolean(PRESERVE_TIMESTAMPS, false))
+        .performRedirects(tool.getBoolean(PERFORM_REDIRECTS, false))
+        .datasetIdsForRedirection(Optional.ofNullable(tool.get(DATASET_IDS_TO_REDIRECT_FROM))
                                           .map(param -> Arrays.stream(param.split(","))
                                                               .map(String::trim)
                                                               .toList())
                                           .orElse(Collections.emptyList()))
-        .indexingProperties(readProperties(tool.getRequired("indexingPropertiesFilePath")))
+        .indexingProperties(readProperties(tool.getRequired(INDEXING_PROPERTIES_FILE_PATH)))
         .build();
-    IndexingJob job = new IndexingJob(readProperties(tool.getRequired("configurationFilePath")), taskParams);
+    IndexingJob job = new IndexingJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
     job.execute();
   }
 

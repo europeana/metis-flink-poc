@@ -15,13 +15,13 @@ public class DbErrorEntityCreatingOperator implements MapFunction<ErrorTuple, Re
   }
 
   @Override
-  public RecordExecutionExceptionLogEntity map(ErrorTuple record) throws Exception {
+  public RecordExecutionExceptionLogEntity map(ErrorTuple recordError) throws Exception {
     return RecordExecutionExceptionLogEntity.builder()
                                             .datasetId(taskParams.getDatasetId())
                                             .executionId(taskParams.getExecutionId().toString())
                                             .executionName(jobName)
-                                            .recordId(record.getRecordId())
-                                            .exception(record.getException())
+                                            .recordId(recordError.getRecordId())
+                                            .exception(recordError.getException())
                                             .build();
   }
 }

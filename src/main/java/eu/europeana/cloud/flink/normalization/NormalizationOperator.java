@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class NormalizationOperator extends FollowingJobMainOperator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NormalizationOperator.class);
-  private NormalizerFactory normalizerFactory;
+  private transient NormalizerFactory normalizerFactory;
 
   @Override
   public RecordTuple map(RecordTuple tuple) throws Exception {
@@ -27,13 +27,13 @@ public class NormalizationOperator extends FollowingJobMainOperator {
     }
 
     String outputXml = normalizationResult.getNormalizedRecordInEdmXml();
-    RecordTuple resultTuple = RecordTuple.builder().recordId(tuple.getRecordId())
-                                         .fileContent(outputXml.getBytes(StandardCharsets.UTF_8))
-                                         .build();
-    return resultTuple;
+    return RecordTuple.builder().recordId(tuple.getRecordId())
+                      .fileContent(outputXml.getBytes(StandardCharsets.UTF_8))
+                      .build();
   }
 
 
+  @Override
   public void open(Configuration parameters) {
     normalizerFactory = new NormalizerFactory();
     LOGGER.info("Created normalization operator.");

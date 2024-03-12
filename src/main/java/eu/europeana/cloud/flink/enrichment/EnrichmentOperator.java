@@ -38,7 +38,6 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
         "http://entity-management-url.com");
     this.enrichmentEntityApiUrl = properties.getProperty(ENRICHMENT_ENTITY_API_URL, "http://entity-api-url.com");
     this.enrichmentEntityApiKey = properties.getProperty(ENRICHMENT_ENTITY_API_KEY, "some-key");
-    //LOGGER.info("Created enrichment operator instance params dereferenceURL: {}", dereferenceURL);
   }
 
   @Override
@@ -49,11 +48,10 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
       String reportString = enrichmentResult.getReport().stream().map(Object::toString).collect(Collectors.joining("\n"));
       throw new RuntimeException("Enrichment ended with error!:\n" + reportString);
     }
-    RecordTuple result = RecordTuple.builder()
-                                    .recordId(tuple.getRecordId())
-                                    .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
-                                    .build();
-    return result;
+    return RecordTuple.builder()
+                      .recordId(tuple.getRecordId())
+                      .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
+                      .build();
   }
 
 

@@ -6,7 +6,7 @@ import org.apache.flink.api.common.functions.FilterFunction;
 /**
  * Filters out deleted records.
  */
-public class DeletedOutFilter implements FilterFunction<OaiRecordHeader> {
+public class DeletedRecordFilter implements FilterFunction<OaiRecordHeader> {
 
   @Override
   public boolean filter(OaiRecordHeader value) {

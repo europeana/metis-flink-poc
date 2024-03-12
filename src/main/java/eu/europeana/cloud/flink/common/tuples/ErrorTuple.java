@@ -8,6 +8,10 @@ import org.apache.flink.util.ExceptionUtils;
 @Builder
 public class ErrorTuple {
 
+  private String recordId;
+
+  private String exception;
+
   public static class ErrorTupleBuilder {
 
     //We could not store the exception itself cause of serialization error:
@@ -18,9 +22,5 @@ public class ErrorTuple {
       return this;
     }
   }
-
-  private String recordId;
-
-  private String exception;
 
 }

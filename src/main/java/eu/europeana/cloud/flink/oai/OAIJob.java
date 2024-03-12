@@ -1,12 +1,13 @@
 package eu.europeana.cloud.flink.oai;
 
 import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
 import eu.europeana.cloud.flink.common.tuples.RecordTuple;
-import eu.europeana.cloud.flink.oai.harvest.DeletedOutFilter;
+import eu.europeana.cloud.flink.oai.harvest.DeletedRecordFilter;
 import eu.europeana.cloud.flink.oai.harvest.RecordHarvestingOperator;
 import eu.europeana.cloud.flink.simpledb.DbEntityCreatingOperator;
 import eu.europeana.cloud.flink.simpledb.DbErrorEntityCreatingOperator;
@@ -36,14 +37,14 @@ public class OAIJob {
     LOGGER.info("Creating {} for execution: {}, with execution parameters: {}",
         getClass().getSimpleName(), taskParams.getExecutionId(), taskParams);
 
-    String jobName = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
+    final String jobName = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
 
     DataStreamSource<OaiRecordHeader> source = flinkEnvironment.fromSource(
         new OAIHeadersSource(taskParams), WatermarkStrategy.noWatermarks(), "OAI Source").setParallelism(1);
 
     SingleOutputStreamOperator<HarvestedRecordTuple> harvestedRecordsStream =
-        source.filter(new DeletedOutFilter())
+        source.filter(new DeletedRecordFilter())
               .process(new RecordHarvestingOperator(taskParams));
 
     SingleOutputStreamOperator<RecordTuple> recordsWithAssignedIdStream =
@@ -68,16 +69,16 @@ public class OAIJob {
   public static void main(String[] args) throws Exception {
     ParameterTool tool = ParameterTool.fromArgs(args);
     OaiHarvest oaiHarvest = new OaiHarvest(
-        tool.getRequired("oaiRepositoryUrl"),
-        tool.getRequired("metadataPrefix"),
-        tool.getRequired("setSpec"));
-    String metisDatasetId = tool.getRequired("metisDatasetId");
+        tool.getRequired(OAI_REPOSITORY_URL),
+        tool.getRequired(METADATA_PREFIX),
+        tool.getRequired(SET_SPEC));
+    String metisDatasetId = tool.getRequired(METIS_DATASET_ID);
     OAITaskParams taskParams =
         OAITaskParams.builder()
                      .oaiHarvest(oaiHarvest)
                      .datasetId(metisDatasetId)
                      .metisDatasetId(metisDatasetId).build();
-    OAIJob job = new OAIJob(readProperties(tool.getRequired("configurationFilePath")), taskParams);
+    OAIJob job = new OAIJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
     job.execute();
   }
 

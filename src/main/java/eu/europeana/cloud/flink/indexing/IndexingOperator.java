@@ -49,11 +49,12 @@ public class IndexingOperator extends FollowingJobMainOperator {
 
   private void removeIndexedRecord(RecordTuple tuple)
       throws IndexingException {
-    String europeanaId = tuple.getRecordId();
+    final String europeanaId = tuple.getRecordId();
     LOGGER.debug("Removing indexed record europeanaId: {}, database: {}", europeanaId, taskParams.getDatabase());
     indexWrapper.getIndexer(taskParams.getDatabase()).remove(europeanaId);
   }
 
+  @Override
   public void open(Configuration parameters) throws TransformationException {
     executionIndexingProperties = new IndexingProperties(taskParams.getRecordDate(), taskParams.isPreserveTimestamps(),
         taskParams.getDatasetIdsForRedirection(), taskParams.isPerformRedirects(), true);
