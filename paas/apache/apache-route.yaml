@@ -2,7 +2,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   annotations:
-    haproxy.router.openshift.io/ip_whitelist: 150.254.169.100/32
+    haproxy.router.openshift.io/ip_whitelist: 150.254.169.100/32 150.254.169.54/32 150.254.169.102/32 158.177.7.254/32 178.62.250.193/32 150.254.155.236 83.83.57.165/32 195.216.97.50
   labels:
     app: apache-dashboard
   name: apache-dashboard
