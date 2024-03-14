@@ -53,12 +53,13 @@ public class ReadParamsOperator extends RichMapFunction<DpsRecord, TaskRecordTup
     TaskInfo taskInfo = taskInfoDAO.findById(dpsRecord.getTaskId()).orElseThrow();
     DpsTask dpsTask = DpsTask.fromTaskInfo(taskInfo);
     Revision outputRevision = dpsTask.getOutputRevision();
+    DataSet dataset = DataSetUrlParser.parse(dpsTask.getParameter(PluginParameterKeys.OUTPUT_DATA_SETS));
     return TaskParams.builder()
                      .id(dpsRecord.getTaskId())
                      .sentDate(taskInfo.getSentTimestamp())
                      .outputMimeType(dpsTask.getParameters().getOrDefault(OUTPUT_MIME_TYPE, "text/plain"))
-                     .providerId(dpsTask.getParameter(PluginParameterKeys.PROVIDER_ID))
-                     .dataSetId(extractDatasetId(dpsTask))
+                     .providerId(dataset.getProviderId())
+                     .dataSetId(dataset.getId())
                      .newRepresentationName(dpsTask.getParameter(NEW_REPRESENTATION_NAME))
                      .revisionProviderId(outputRevision.getRevisionProviderId())
                      .revisionName(outputRevision.getRevisionName())
@@ -84,9 +85,5 @@ public class ReadParamsOperator extends RichMapFunction<DpsRecord, TaskRecordTup
     LOGGER.info("Created reading parameters operator.");
   }
 
-  public static String extractDatasetId(DpsTask task) throws MalformedURLException {
-    DataSet dataset = DataSetUrlParser.parse(task.getParameter(PluginParameterKeys.OUTPUT_DATA_SETS));
-    return dataset.getId();
-  }
 
 }
