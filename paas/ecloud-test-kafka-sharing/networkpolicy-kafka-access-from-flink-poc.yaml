@@ -1,0 +1,19 @@
+﻿kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: kafka-access-from-flink-poc
+  namespace: ecloud-dev-test
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 9092
+      from:
+        - namespaceSelector:
+            matchLabels:
+              name: ecloud-flink-poc
+  policyTypes:
+    - Ingress
