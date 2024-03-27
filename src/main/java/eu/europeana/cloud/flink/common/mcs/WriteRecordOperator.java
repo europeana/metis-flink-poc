@@ -11,7 +11,9 @@ import eu.europeana.cloud.flink.common.tuples.WrittenRecordTuple;
 import eu.europeana.cloud.flink.common.tuples.WrittenRecordTuple.WrittenRecordTupleBuilder;
 import eu.europeana.cloud.mcs.driver.RecordServiceClient;
 import eu.europeana.cloud.service.dps.storm.utils.UUIDWrapper;
+import eu.europeana.cloud.service.mcs.exception.MCSException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -39,15 +41,16 @@ public class WriteRecordOperator extends RichMapFunction<FileTuple, WrittenRecor
     if (!tuple.isMarkedAsDeleted()) {
       URI newUri = createRepresentationAndUploadFile(taskParams, recordParams, tuple.getFileContent());
       result.newResourceUrl(newUri.toString());
+    }else{
+      LOGGER.debug("Omitted deleted representation, url: {}", tuple.getResourceUrl());
     }
     return result.build();
   }
 
   protected java.net.URI createRepresentationAndUploadFile(TaskParams taskParams, RecordParams recordParams, byte[] fileContent)
-      throws Exception {
-    String recordId = recordParams.getRecordId();
-
-    URI savedFileUrl = recordServiceClient.createRepresentation(
+      throws MCSException, IOException {
+    final String recordId = recordParams.getRecordId();
+    final URI savedFileUrl = recordServiceClient.createRepresentation(
         recordParams.getCloudId(),
         taskParams.getNewRepresentationName(),
         taskParams.getProviderId(),
@@ -58,8 +61,7 @@ public class WriteRecordOperator extends RichMapFunction<FileTuple, WrittenRecor
         taskParams.getOutputMimeType()
     );
 
-    LOGGER.info("Saved file in MCS url: {}", savedFileUrl);
-    LOGGER.debug("Saved file content: {}", fileContent);
+    LOGGER.debug("Saved file in MCS, url: {}, content: {}", savedFileUrl, fileContent);
     return savedFileUrl;
   }
 

@@ -55,7 +55,7 @@ public class AddToRevisionOperator extends RichMapFunction<WrittenRecordTuple, N
         urlParser.getPart(UrlPart.REPRESENTATIONS),
         urlParser.getPart(UrlPart.VERSIONS),
         outputRevision);
-    LOGGER.info("Added revision to resource: {} revision: {}", resourceUrl, outputRevision);
+    LOGGER.debug("Added revision to resource: {} revision: {}", resourceUrl, outputRevision);
   }
 
   @Override

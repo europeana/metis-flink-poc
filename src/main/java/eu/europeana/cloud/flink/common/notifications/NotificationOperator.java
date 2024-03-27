@@ -57,7 +57,7 @@ public class NotificationOperator extends RichMapFunction<NotificationTuple, Not
     ));
     cassandraConnectionProvider.getSession().execute(batchStatement);
 
-    LOGGER.info("Stored notifications and updated counters for: {}, counters: {}", tuple.getResource(), counter);
+    LOGGER.debug("Stored notifications and updated counters for: {}, counters: {}", tuple.getResource(), counter);
     return tuple;
   }
 

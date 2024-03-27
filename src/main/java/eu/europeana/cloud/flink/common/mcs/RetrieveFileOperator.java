@@ -31,8 +31,7 @@ public class RetrieveFileOperator extends RichMapFunction<TaskRecordTuple, FileT
     if (!tuple.isMarkedAsDeleted()) {
       byte[] fileContent = fileServiceClient.getFile(tuple.getFileUrl()).readAllBytes();
       builder.fileContent(fileContent);
-      LOGGER.info("Loaded file from MCS  url: {}", tuple.getFileUrl());
-      LOGGER.debug("File content: {}", fileContent);
+      LOGGER.debug("Loaded file from MCS  url: {}, content: {}", tuple.getFileUrl(), fileContent);
     }
 
     return builder.build();
