@@ -34,5 +34,9 @@
         </Root>
         <Logger name="eu.europeana" level="info"/>
         <Logger name="eu.europeana.cloud.flink" level="debug"/>
+
+        <Logger name="org.apache.flink.connector.cassandra.source" level="debug"/>
+        <Logger name="org.apache.flink.streaming.connectors.cassandra" level="debug"/>
+        <Logger name="org.apache.flink.batch.connectors.cassandra" level="debug"/>
     </Loggers>
 </Configuration>

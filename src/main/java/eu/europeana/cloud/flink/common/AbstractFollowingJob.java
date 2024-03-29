@@ -13,6 +13,7 @@ import eu.europeana.cloud.flink.simpledb.RecordExecutionEntity;
 import eu.europeana.cloud.flink.simpledb.RecordExecutionExceptionLogEntity;
 import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
 import java.util.Properties;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -27,10 +28,12 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
 
   protected final StreamExecutionEnvironment flinkEnvironment;
   private final String jobName;
+  private final PARAMS_TYPE taskParams;
 
   protected AbstractFollowingJob(Properties properties, PARAMS_TYPE taskParams) throws Exception {
     LOGGER.info("Creating {} for execution: {}, with execution parameters: {}",
         getClass().getSimpleName(), taskParams.getExecutionId(), taskParams);
+    this.taskParams = taskParams;
     String jobType = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
     jobName = createJobName(taskParams, jobType);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -39,7 +42,6 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
         //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
         //TODO The command rebalance does not work for this source for some reasons. To investigate
         .setParallelism(1);
-
 
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator()).name("Prepare DB entity")
@@ -59,7 +61,7 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     CassandraSink.addSink(errorStream)
                  .setClusterBuilder(cassandraClusterBuilder)
                  .build();
-
+    LOGGER.info("Created the Job");
   }
 
   protected abstract String mainOperatorName();
@@ -67,13 +69,16 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
   protected abstract FollowingJobMainOperator createMainOperator(Properties properties, PARAMS_TYPE taskParams);
 
   protected void execute() throws Exception {
-    flinkEnvironment.execute(jobName);
+    LOGGER.info("Executing the Job...");
+    JobExecutionResult result = flinkEnvironment.execute(jobName);
+    LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
+        result);
   }
 
 
   @NotNull
   public static String createJobName(TaskParams taskParams, String jobType) {
-    return jobType + " (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId()+")";
+    return jobType + " (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId() + ")";
   }
 
 }
