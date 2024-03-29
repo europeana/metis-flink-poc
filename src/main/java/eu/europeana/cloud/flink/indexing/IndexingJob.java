@@ -4,7 +4,7 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
-import eu.europeana.cloud.service.commons.utils.DateHelper;
+import eu.europeana.cloud.common.utils.DateHelper;
 import eu.europeana.cloud.service.dps.metis.indexing.TargetIndexingDatabase;
 import java.util.Arrays;
 import java.util.Collections;

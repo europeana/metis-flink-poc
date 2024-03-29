@@ -3,7 +3,7 @@ package eu.europeana.cloud.flink.integration.ecloud.common;
 import eu.europeana.cloud.flink.common.sink.PojoSinkBuilder;
 import eu.europeana.cloud.flink.common.tuples.NotificationTuple;
 import eu.europeana.cloud.service.dps.DpsRecord;
-import eu.europeana.cloud.service.dps.DpsRecordDeserializer;
+import eu.europeana.cloud.service.dps.storm.kafka.DpsRecordDeserializer;
 import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
 import java.io.FileInputStream;
 import java.io.IOException;
