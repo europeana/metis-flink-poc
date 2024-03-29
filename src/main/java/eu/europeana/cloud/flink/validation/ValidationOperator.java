@@ -60,4 +60,11 @@ public class ValidationOperator extends FollowingJobMainOperator {
     transformer = new XsltTransformer(sorterFileLocation);
     LOGGER.info("Created validation operator.");
   }
+
+  @Override
+  public void close() throws Exception {
+    validationService.cleanup();
+    transformer.close();
+  }
+
 }
