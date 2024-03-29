@@ -32,13 +32,15 @@ spec:
               mountPath: /opt/flink/conf
             - name: log-volume
               mountPath: /opt/flink/log
+            - name: dumps
+              mountPath: /dumps
           resources:
             limits:
               cpu: "2"
-              memory: 3048Mi
+              memory: 4Gi
             requests:
               cpu: "1"
-              memory: 3048Mi
+              memory: 4Gi
       volumes:
         - name: flink-config-volume
           configMap:
@@ -53,3 +55,6 @@ spec:
           name: log-volume
         - emptyDir: { }
           name: conf-volume
+        - name: dumps
+          persistentVolumeClaim:
+            claimName: task-manager-dumps

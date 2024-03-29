@@ -42,13 +42,15 @@ spec:
               mountPath: /web-upload
             - name: working-directory
               mountPath: /working-directory
+            - name: dumps
+              mountPath: /dumps
           resources:
             limits:
               cpu: "2"
-              memory: 2048Mi
+              memory: 4Gi
             requests:
               cpu: "1"
-              memory: 2048Mi
+              memory: 4Gi
       volumes:
         - name: flink-config-volume
           configMap:
@@ -72,3 +74,6 @@ spec:
         - name: web-upload
           persistentVolumeClaim:
             claimName: web-upload
+        - name: dumps
+          persistentVolumeClaim:
+            claimName: job-manager-dumps
