@@ -4,6 +4,7 @@ import static eu.europeana.cloud.flink.common.AbstractFollowingJob.createJobName
 import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
@@ -69,9 +70,9 @@ public class OAIJob {
   }
 
   private String createSourceName(OAITaskParams taskParams) {
-    return "OAI (url: "+taskParams.getOaiHarvest().getRepositoryUrl()
-        +", set: "+taskParams.getOaiHarvest().getSetSpec()+
-        ", format: "+taskParams.getOaiHarvest().getMetadataPrefix() +")";
+    return "OAI (url: " + taskParams.getOaiHarvest().getRepositoryUrl()
+        + ", set: " + taskParams.getOaiHarvest().getSetSpec() +
+        ", format: " + taskParams.getOaiHarvest().getMetadataPrefix() + ")";
   }
 
   public static void main(String[] args) throws Exception {
@@ -80,12 +81,14 @@ public class OAIJob {
         tool.getRequired(OAI_REPOSITORY_URL),
         tool.getRequired(METADATA_PREFIX),
         tool.getRequired(SET_SPEC));
-    String metisDatasetId = tool.getRequired(METIS_DATASET_ID);
+    String datasetId = tool.getRequired(DATASET_ID);
     OAITaskParams taskParams =
         OAITaskParams.builder()
                      .oaiHarvest(oaiHarvest)
-                     .datasetId(metisDatasetId)
-                     .metisDatasetId(metisDatasetId).build();
+                     .datasetId(datasetId)
+                     .metisDatasetId(datasetId)
+                     .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
+                     .build();
     OAIJob job = new OAIJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
     job.execute();
   }

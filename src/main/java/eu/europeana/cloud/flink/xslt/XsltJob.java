@@ -2,6 +2,7 @@ package eu.europeana.cloud.flink.xslt;
 
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
 import java.util.Properties;
@@ -25,10 +26,11 @@ public class XsltJob extends AbstractFollowingJob<XsltParams> {
   public static void main(String[] args) throws Exception {
 
     ParameterTool tool = ParameterTool.fromArgs(args);
-    String metisDatasetId = tool.getRequired(METIS_DATASET_ID);
+    String metisDatasetId = tool.getRequired(DATASET_ID);
     XsltParams taskParams = XsltParams
         .builder()
         .datasetId(metisDatasetId)
+        .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
         .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
         .xsltUrl(tool.getRequired(XSLT_URL))
         .metisDatasetId(metisDatasetId)

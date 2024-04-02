@@ -4,9 +4,9 @@ public class JobsParametersConstants {
 
   //Common
   public static final String DATASET_ID = "datasetId";
+  public static final String EXECUTION_ID = "executionId";
   public static final String PREVIOUS_STEP_ID = "previousStepId";
   public static final String CONFIGURATION_FILE_PATH = "configurationFilePath";
-  public static final String METIS_DATASET_ID = "metisDatasetId";
 
   //OAI
   public static final String SET_SPEC = "setSpec";
@@ -31,6 +31,7 @@ public class JobsParametersConstants {
   public static final String PRESERVE_TIMESTAMPS = "preserveTimestamps";
   public static final String PERFORM_REDIRECTS = "performRedirects";
   public static final String DATASET_IDS_TO_REDIRECT_FROM = "datasetIdsToRedirectFrom";
+
 
 
 }

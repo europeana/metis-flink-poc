@@ -2,6 +2,7 @@ package eu.europeana.cloud.flink.normalization;
 
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
 import eu.europeana.cloud.flink.common.FollowingTaskParams;
@@ -30,6 +31,7 @@ public class NormalizationJob extends AbstractFollowingJob<FollowingTaskParams> 
     FollowingTaskParams taskParams = FollowingTaskParams
         .builder()
         .datasetId(tool.getRequired(DATASET_ID))
+        .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
         .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
         .build();
 

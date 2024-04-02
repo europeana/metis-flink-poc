@@ -1,10 +1,12 @@
 package eu.europeana.cloud.flink.common.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
+import com.datastax.driver.core.utils.UUIDs;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 public class JobUtils {
 
@@ -16,4 +18,10 @@ public class JobUtils {
     }
   }
 
+  @NotNull
+  public static UUID useNewIfNull(String uuidString) {
+    return Optional.ofNullable(uuidString)
+                   .map(UUID::fromString)
+                   .orElse(UUIDs.timeBased());
+  }
 }

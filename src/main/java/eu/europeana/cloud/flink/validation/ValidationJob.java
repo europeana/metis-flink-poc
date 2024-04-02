@@ -2,6 +2,7 @@ package eu.europeana.cloud.flink.validation;
 
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
 import eu.europeana.cloud.flink.common.FollowingJobMainOperator;
@@ -28,10 +29,11 @@ public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
   public static void main(String[] args) throws Exception {
 
     ParameterTool tool = ParameterTool.fromArgs(args);
-    String metisDatasetId = tool.getRequired(DATASET_ID);
+    String datasetId = tool.getRequired(DATASET_ID);
     ValidationTaskParams taskParams = ValidationTaskParams
         .builder()
-        .datasetId(metisDatasetId)
+        .datasetId(datasetId)
+        .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
         .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
         .schemaName(tool.getRequired(SCHEMA_NAME))
         .rootLocation(tool.getRequired(ROOT_LOCATION))

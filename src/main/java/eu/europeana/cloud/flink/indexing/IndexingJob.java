@@ -1,6 +1,7 @@
 package eu.europeana.cloud.flink.indexing;
 
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
+import static eu.europeana.cloud.flink.common.utils.JobUtils.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
@@ -39,6 +40,7 @@ public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
         .builder()
         .datasetId(metisDatasetId)
         .metisDatasetId(metisDatasetId)
+        .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
         .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
         .database(TargetIndexingDatabase.valueOf(tool.getRequired(TARGET_INDEXING_DATABASE)))
         .recordDate(Optional.ofNullable(tool.get(RECORD_DATE)).map(DateHelper::parseISODate).orElse(new Date()))
