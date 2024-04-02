@@ -16,6 +16,8 @@
         <ecloud.version>12-SNAPSHOT</ecloud.version>
         <metis.version>12-SNAPSHOT</metis.version>
         <metis.normalization.version>13-SNAPSHOT</metis.normalization.version>
+        <version.corelib>2.16.8</version.corelib>
+        <version.spring-framework>6.1.4</version.spring-framework>
     </properties>
 
     <repositories>
@@ -45,6 +47,13 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-framework-bom</artifactId>
+            <version>${version.spring-framework}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.30</version>
@@ -67,7 +76,7 @@
             <artifactId>flink-streaming-java</artifactId>
             <version>${flink.version}</version>
             <scope>provided</scope>
-    </dependency>
+        </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-core</artifactId>
@@ -98,7 +107,6 @@
             <version>1.18.1</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-cassandra_2.12</artifactId>
@@ -120,7 +128,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>4.1.94.Final</version>
+            <version>4.1.107.Final</version>
         </dependency>
         <dependency>
             <groupId>eu.europeana.metis</groupId>
@@ -141,7 +149,7 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-slf4j-impl</artifactId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
                 </exclusion>
                 <exclusion>
                     <artifactId>eu.europeana.metis</artifactId>
@@ -149,6 +157,41 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
+            <version>${version.spring-framework}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${version.spring-framework}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.europeana.corelib</groupId>
+            <artifactId>corelib-schemaorg</artifactId>
+            <version>${version.corelib}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+            <version>1.0.43</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+
+
         <dependency>
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-normalization</artifactId>
@@ -195,7 +238,15 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-slf4j-impl</artifactId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.europeana.metis</groupId>
+                    <artifactId>metis-common-utils</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.hamcrest</groupId>
+                    <artifactId>hamcrest-all</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -275,11 +326,67 @@
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-transformation-service</artifactId>
             <version>${metis.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.europeana.metis</groupId>
+                    <artifactId>metis-common-utils</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>eu.europeana.metis</groupId>
+            <artifactId>metis-indexing</artifactId>
+            <version>${metis.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.europeana.corelib</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>${version.spring-framework}</version>
         </dependency>
         <dependency>
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-validation-service</artifactId>
             <version>${metis.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.europeana.metis</groupId>
+                    <artifactId>metis-common-utils</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eu.europeana.metis</groupId>
@@ -298,6 +405,30 @@
         </dependency>
 
         <dependency>
+            <groupId>eu.europeana.metis</groupId>
+            <artifactId>metis-common-utils</artifactId>
+            <version>${ecloud.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.europeana.cloud</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
             <groupId>eu.europeana.cloud</groupId>
             <artifactId>ecloud-service-dps-utils</artifactId>
             <version>${ecloud.version}</version>
@@ -309,6 +440,14 @@
                 <exclusion>
                     <groupId>eu.europeana.cloud</groupId>
                     <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>eu.europeana.metis</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-validator</groupId>
+                    <artifactId>commons-validator</artifactId>
                 </exclusion>
 
             </exclusions>

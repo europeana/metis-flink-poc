@@ -3,11 +3,15 @@ package eu.europeana.cloud.flink.indexing;
 import eu.europeana.cloud.flink.common.FollowingJobMainOperator;
 import eu.europeana.cloud.flink.common.tuples.RecordTuple;
 import eu.europeana.cloud.service.dps.metis.indexing.TargetIndexingDatabase;
-import eu.europeana.cloud.service.dps.service.utils.indexing.IndexWrapper;
+import eu.europeana.cloud.service.dps.service.utils.indexing.IndexingSettingsGenerator;
+import eu.europeana.indexing.Indexer;
+import eu.europeana.indexing.IndexerFactory;
 import eu.europeana.indexing.IndexingProperties;
+import eu.europeana.indexing.IndexingSettings;
 import eu.europeana.indexing.exception.IndexingException;
 import eu.europeana.indexing.tiers.model.MediaTier;
 import eu.europeana.metis.transformation.service.TransformationException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.flink.configuration.Configuration;
@@ -19,8 +23,9 @@ public class IndexingOperator extends FollowingJobMainOperator {
   private static final Logger LOGGER = LoggerFactory.getLogger(IndexingOperator.class);
 
   private final IndexingTaskParams taskParams;
-  private transient IndexWrapper indexWrapper;
+  private transient Indexer indexer;
   private transient IndexingProperties executionIndexingProperties;
+
   public IndexingOperator(IndexingTaskParams taskParams) {
     this.taskParams = taskParams;
   }
@@ -39,7 +44,7 @@ public class IndexingOperator extends FollowingJobMainOperator {
   private boolean indexRecord(RecordTuple tuple) throws IndexingException {
     AtomicBoolean suitableForPublication = new AtomicBoolean();
     final var document = new String(tuple.getFileContent(), StandardCharsets.UTF_8);
-    indexWrapper.getIndexer(taskParams.getDatabase()).index(document, executionIndexingProperties, tier -> {
+    indexer.index(document, executionIndexingProperties, tier -> {
       suitableForPublication.set(
           (taskParams.getDatabase() == TargetIndexingDatabase.PREVIEW) || (tier.getMediaTier() != MediaTier.T0));
       return suitableForPublication.get();
@@ -51,19 +56,28 @@ public class IndexingOperator extends FollowingJobMainOperator {
       throws IndexingException {
     final String europeanaId = tuple.getRecordId();
     LOGGER.debug("Removing indexed record europeanaId: {}, database: {}", europeanaId, taskParams.getDatabase());
-    indexWrapper.getIndexer(taskParams.getDatabase()).remove(europeanaId);
+    indexer.remove(europeanaId);
   }
 
   @Override
-  public void open(Configuration parameters) throws TransformationException {
+  public void open(Configuration parameters) throws TransformationException, IndexingException, URISyntaxException {
     executionIndexingProperties = new IndexingProperties(taskParams.getRecordDate(), taskParams.isPreserveTimestamps(),
         taskParams.getDatasetIdsForRedirection(), taskParams.isPerformRedirects(), true);
-    indexWrapper = IndexWrapper.getInstance(taskParams.getIndexingProperties());
+    IndexerFactory indexerFactory = new IndexerFactory(prepareIndexingSettings());
+    indexer = indexerFactory.getIndexer();
     LOGGER.info("Created indexing operator.");
+  }
+
+  private IndexingSettings prepareIndexingSettings() throws IndexingException, URISyntaxException {
+    IndexingSettingsGenerator settingsGenerator = new IndexingSettingsGenerator(taskParams.getIndexingProperties());
+    return taskParams.getDatabase() == TargetIndexingDatabase.PREVIEW
+        ? settingsGenerator.generateForPreview()
+        : settingsGenerator.generateForPublish();
   }
 
   @Override
   public void close() throws Exception {
-   indexWrapper.close();
+    indexer.close();
+    LOGGER.info("Closed indexing operator.");
   }
 }

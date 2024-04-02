@@ -200,3 +200,4 @@ README.html
 .exercism
 *enrichment*.xml
 /config/
+/docker/flink-node-with-application/flink-poc.jar

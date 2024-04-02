@@ -19,7 +19,7 @@
     <Properties>
         <Property name="fileName">topology.log</Property>
         <Property name="filePattern">${fileName}.%d{yyyy-MM-dd}</Property>
-        <Property name="pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} FlinkPOC - %p %C [%t] : %m%n</Property>
+        <Property name="pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} FlinkPOC - %p %C : %m [%t]%n</Property>
     </Properties>
 
     <Appenders>
