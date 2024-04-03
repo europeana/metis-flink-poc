@@ -44,7 +44,7 @@ public class ReadParamsOperator extends RichMapFunction<DpsRecord, TaskRecordTup
                                                  .taskParams(createTaskParams(dpsRecord))
                                                  .recordParams(createRecordParams(dpsRecord)).
                                                  build();
-    LOGGER.info("Read parameters for tuple: {}", resultTuple);
+    LOGGER.debug("Read parameters for tuple: {}", resultTuple);
     return resultTuple;
   }
 

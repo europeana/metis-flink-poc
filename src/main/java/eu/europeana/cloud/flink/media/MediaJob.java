@@ -1,4 +1,4 @@
-package eu.europeana.cloud.flink.normalization;
+package eu.europeana.cloud.flink.media;
 
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
@@ -9,17 +9,16 @@ import java.util.Properties;
 import java.util.UUID;
 import org.apache.flink.api.java.utils.ParameterTool;
 
-public class NormalizationJob extends AbstractFollowingJob<FollowingTaskParams> {
+public class MediaJob extends AbstractFollowingJob<FollowingTaskParams> {
 
-  public NormalizationJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
-    super(properties,taskParams);
+  public MediaJob(Properties properties, FollowingTaskParams taskParams) throws Exception {
+    super(properties, taskParams);
   }
 
   @Override
-  protected NormalizationOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {
-    return new NormalizationOperator();
+  protected MediaOperator createMainOperator(Properties properties, FollowingTaskParams taskParams) {
+    return new MediaOperator();
   }
-
 
   public static void main(String[] args) throws Exception {
 
@@ -30,9 +29,8 @@ public class NormalizationJob extends AbstractFollowingJob<FollowingTaskParams> 
         .previousStepId(UUID.fromString(tool.getRequired(PREVIOUS_STEP_ID)))
         .build();
 
-    NormalizationJob job = new NormalizationJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
+    MediaJob job = new MediaJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
     job.execute();
   }
-
 
 }
