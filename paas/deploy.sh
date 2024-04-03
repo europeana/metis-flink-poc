@@ -11,7 +11,6 @@ oc apply -f deployments-volume.yaml
 oc apply -f web-upload-volume.yaml
 oc apply -f job-manager-working-volume.yaml
 oc apply -f job-manager-dumps-volume.yaml
-oc apply -f task-manager-dumps-volume.yaml
 # Configuration and service definition
 oc apply -f flink-configuration-configmap.yaml
 oc apply -f jobmanager-service.yaml

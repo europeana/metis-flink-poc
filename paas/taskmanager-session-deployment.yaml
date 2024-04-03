@@ -56,5 +56,4 @@ spec:
         - emptyDir: { }
           name: conf-volume
         - name: dumps
-          persistentVolumeClaim:
-            claimName: task-manager-dumps
+          emptyDir: { }
