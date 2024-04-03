@@ -64,7 +64,9 @@ public class ValidationOperator extends FollowingJobMainOperator {
   @Override
   public void close() throws Exception {
     validationService.cleanup();
-    transformer.close();
+    //We do not close XsltTransformer, cause its close method closes static resource, so looks to be improper.
+    // The same is in the XsltBolt in the eCloud code.
+    // transformer.close();
   }
 
 }

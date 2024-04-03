@@ -27,18 +27,16 @@ public class XsltOperator extends FollowingJobMainOperator {
   // closes static resource, so looks to be improper. The same is in the XsltBolt in the eCloud code.
   @Override
   public RecordTuple map(RecordTuple tuple) throws Exception {
-    try (final XsltTransformer xsltTransformer = prepareXsltTransformer()) {
+    final XsltTransformer xsltTransformer = prepareXsltTransformer();
 
-      StringWriter writer =
-          xsltTransformer.transform(tuple.getFileContent(), prepareEuropeanaGeneratedIdsMap(tuple));
+    StringWriter writer =
+        xsltTransformer.transform(tuple.getFileContent(), prepareEuropeanaGeneratedIdsMap(tuple));
 
     return RecordTuple.builder()
-                                      .recordId(tuple.getRecordId())
-                                      .fileContent(writer.toString().getBytes(StandardCharsets.UTF_8))
-                                      .build();
-    }
+                      .recordId(tuple.getRecordId())
+                      .fileContent(writer.toString().getBytes(StandardCharsets.UTF_8))
+                      .build();
   }
-
 
   private XsltTransformer prepareXsltTransformer()
       throws TransformationException {
