@@ -32,6 +32,7 @@ public class JobsParametersConstants {
   public static final String PERFORM_REDIRECTS = "performRedirects";
   public static final String DATASET_IDS_TO_REDIRECT_FROM = "datasetIdsToRedirectFrom";
 
-
+  // checkpoints
+  public static final String PATH_FLINK_JOBS_CHECKPOINTS = "file:///data/flink/checkpoints";
 
 }

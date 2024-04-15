@@ -22,6 +22,7 @@ data:
     jobstore.type: File
     process.jobmanager.working-dir: /working-directory
     jobmanager.resource-id: poc1
+    state.checkpoints.dir: /data/flink/checkpoints
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO

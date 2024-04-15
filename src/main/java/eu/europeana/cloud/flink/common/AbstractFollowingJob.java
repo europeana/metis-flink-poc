@@ -1,11 +1,11 @@
 package eu.europeana.cloud.flink.common;
 
-import static eu.europeana.cloud.flink.simpledb.SimpleDbCassandraSourceBuilder.createCassandraSource;
 import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PATH_FLINK_JOBS_CHECKPOINTS;
+import static eu.europeana.cloud.flink.simpledb.SimpleDbCassandraSourceBuilder.createCassandraSource;
 
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.common.tuples.RecordTuple;
-import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.cloud.flink.simpledb.DbEntityCreatingOperator;
 import eu.europeana.cloud.flink.simpledb.DbEntityToTupleConvertingOperator;
 import eu.europeana.cloud.flink.simpledb.DbErrorEntityCreatingOperator;
@@ -14,6 +14,7 @@ import eu.europeana.cloud.flink.simpledb.RecordExecutionExceptionLogEntity;
 import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
 import java.util.Properties;
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -37,7 +38,8 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     String jobType = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
     jobName = createJobName(taskParams, jobType);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
-
+    flinkEnvironment.getCheckpointConfig().setCheckpointStorage(new FileSystemCheckpointStorage(PATH_FLINK_JOBS_CHECKPOINTS));
+    flinkEnvironment.registerJobListener(new CheckpointCleanupListener());
     DataStreamSource<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams)
         //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
         //TODO The command rebalance does not work for this source for some reasons. To investigate
@@ -64,6 +66,11 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     LOGGER.info("Created the Job");
   }
 
+  @NotNull
+  public static String createJobName(TaskParams taskParams, String jobType) {
+    return jobType + " (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId() + ")";
+  }
+
   protected abstract String mainOperatorName();
 
   protected abstract FollowingJobMainOperator createMainOperator(Properties properties, PARAMS_TYPE taskParams);
@@ -73,12 +80,6 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     JobExecutionResult result = flinkEnvironment.execute(jobName);
     LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
         result);
-  }
-
-
-  @NotNull
-  public static String createJobName(TaskParams taskParams, String jobType) {
-    return jobType + " (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId() + ")";
   }
 
 }

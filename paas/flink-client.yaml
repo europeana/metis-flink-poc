@@ -27,6 +27,8 @@ spec:
               mountPath: /opt/flink/log
             - name: jobs-config
               mountPath: /jobs-config
+            - name: checkpoints
+              mountPath: /data/flink/checkpoints
       volumes:
         - name: deployments
           persistentVolumeClaim:
