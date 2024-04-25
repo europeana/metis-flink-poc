@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Index Preview" type="Application" factoryName="Application" folderName="executions" singleton="false">
+    <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
+    <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.indexing.IndexingJob" />
+    <module name="flinkPoC" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies/indexing.cfg --indexingPropertiesFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies/indexing.properties --datasetId 1 --previousStepId 5e6c3f70-f35b-11ee-82d8-c7431f4dec56 --targetIndexingDatabase PREVIEW" />
+    <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="eu.europeana.cloud.flink.normalization.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

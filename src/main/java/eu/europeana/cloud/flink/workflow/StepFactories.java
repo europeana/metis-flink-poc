@@ -1,6 +1,18 @@
 package eu.europeana.cloud.flink.workflow;
 
-import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.CONFIGURATION_FILE_PATH;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.INDEXING_PROPERTIES_FILE_PATH;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.METADATA_PREFIX;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PREVIOUS_STEP_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.ROOT_LOCATION;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.SCHEMATRON_LOCATION;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.SCHEMA_NAME;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.TARGET_INDEXING_DATABASE;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.XSLT_URL;
 
 import eu.europeana.cloud.flink.enrichment.EnrichmentJob;
 import eu.europeana.cloud.flink.indexing.IndexingJob;
@@ -15,6 +27,8 @@ import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.api.common.JobExecutionResult;
 
 public class StepFactories {
 
@@ -28,6 +42,8 @@ public class StepFactories {
       new IndexingStepFactory(TargetIndexingDatabase.PREVIEW),
       new IndexingStepFactory(TargetIndexingDatabase.PUBLISH)
   };
+
+  private static final String JOBS_CONFIG_PATH = "/jobs-config";
 
   public static SubmitJobRequest createOAIRequest(String datasetId, UUID executionId, OaiHarvest oaiHarvest, int parallelism) {
     return SubmitJobRequest.builder()
@@ -46,7 +62,7 @@ public class StepFactories {
 
   private static Map<String, Object> prepareOaiArgs(String datasetId, UUID executionId, OaiHarvest oaiHarvest) {
     return Map.of(
-        CONFIGURATION_FILE_PATH, "/jobs-config/oai_job.properties",
+        CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/oai_job.properties",
         DATASET_ID, datasetId,
         EXECUTION_ID, executionId,
         SET_SPEC, oaiHarvest.getSetSpec(),
@@ -68,11 +84,9 @@ public class StepFactories {
 
     protected abstract Class getJobClass();
 
-
     protected abstract Map<String, Object> prepareSpecificArgs();
 
   }
-
 
   public static class ExternalValidationStepFactory extends FollowingJobRequestFactory {
 
@@ -84,8 +98,8 @@ public class StepFactories {
     @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/validation_job.properties",
-          SCHEMA_NAME, "http://ftp.eanadev.org/schema_zips/europeana_schemas-20220809.zip",
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/validation_job.properties",
+          SCHEMA_NAME, "http://ftp.eanadev.org/schema_zips/europeana_schemas-20231130.zip",
           ROOT_LOCATION, "EDM.xsd",
           SCHEMATRON_LOCATION, "schematron/schematron.xsl");
     }
@@ -101,36 +115,34 @@ public class StepFactories {
     @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/validation_job.properties",
-          SCHEMA_NAME, "http://ftp.eanadev.org/schema_zips/europeana_schemas-20220809.zip",
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/validation_job.properties",
+          SCHEMA_NAME, "http://ftp.eanadev.org/schema_zips/europeana_schemas-20231130.zip",
           ROOT_LOCATION, "EDM-INTERNAL.xsd",
           SCHEMATRON_LOCATION, "schematron/schematron-internal.xsl");
     }
   }
 
-
   public static class IndexingStepFactory extends FollowingJobRequestFactory {
 
     private final TargetIndexingDatabase targetIndexingDatabase;
-
-    @Override
-    protected Class getJobClass() {
-      return IndexingJob.class;
-    }
 
     public IndexingStepFactory(TargetIndexingDatabase targetIndexingDatabase) {
       this.targetIndexingDatabase = targetIndexingDatabase;
     }
 
     @Override
+    protected Class getJobClass() {
+      return IndexingJob.class;
+    }
+
+    @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/indexing_job.properties",
-          INDEXING_PROPERTIES_FILE_PATH, "/jobs-config/indexing.properties",
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/indexing_job.properties",
+          INDEXING_PROPERTIES_FILE_PATH, JOBS_CONFIG_PATH + "/indexing.properties",
           TARGET_INDEXING_DATABASE, targetIndexingDatabase);
     }
   }
-
 
   public static class XsltStepFactory extends FollowingJobRequestFactory {
 
@@ -142,7 +154,7 @@ public class StepFactories {
     @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/xslt_job.properties",
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/xslt_job.properties",
           XSLT_URL, "https://metis-core-rest.test.eanadev.org/datasets/xslt/default");
     }
   }
@@ -157,7 +169,7 @@ public class StepFactories {
     @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/normalization_job.properties");
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/normalization_job.properties");
     }
   }
 
@@ -171,7 +183,7 @@ public class StepFactories {
     @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/enrichment_job.properties");
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/enrichment_job.properties");
     }
 
   }
@@ -186,7 +198,7 @@ public class StepFactories {
     @Override
     protected Map<String, Object> prepareSpecificArgs() {
       return Map.of(
-          CONFIGURATION_FILE_PATH, "/jobs-config/media_job.properties");
+          CONFIGURATION_FILE_PATH, JOBS_CONFIG_PATH + "/media_job.properties");
     }
 
   }

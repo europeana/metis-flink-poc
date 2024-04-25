@@ -17,9 +17,9 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WorkflowExecutor {
+public class WorkflowExecutorWithAPI {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowExecutor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowExecutorWithAPI.class);
 
   private final String datasetId;
   private final OaiHarvest oaiHarvest;
@@ -28,7 +28,7 @@ public class WorkflowExecutor {
   private int parallelism;
 
 
-  public WorkflowExecutor(Properties serverConfiguration, String datasetId, OaiHarvest oaiHarvest, int parallelism) {
+  public WorkflowExecutorWithAPI(Properties serverConfiguration, String datasetId, OaiHarvest oaiHarvest, int parallelism) {
     this.jobExecutor = new JobExecutor(serverConfiguration);
     this.datasetId = datasetId;
     this.oaiHarvest = oaiHarvest;
@@ -44,7 +44,7 @@ public class WorkflowExecutor {
     String datasetId = tool.getRequired(DATASET_ID);
     Properties serverConfiguration = readProperties(tool.getRequired(CONFIGURATION_FILE_PATH));
     int parallelism = tool.getInt("parallelism", 1);
-    new WorkflowExecutor(serverConfiguration, datasetId, oaiHarvest, parallelism).execute();
+    new WorkflowExecutorWithAPI(serverConfiguration, datasetId, oaiHarvest, parallelism).execute();
   }
 
   private void execute() {

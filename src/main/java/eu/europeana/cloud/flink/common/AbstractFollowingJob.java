@@ -23,15 +23,33 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskParams> {
+public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskParams> extends GenericJob<PARAMS_TYPE> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFollowingJob.class);
 
-  protected final StreamExecutionEnvironment flinkEnvironment;
-  private final String jobName;
-  private final PARAMS_TYPE taskParams;
+  protected StreamExecutionEnvironment flinkEnvironment;
+  private String jobName;
+  private PARAMS_TYPE taskParams;
 
-  protected AbstractFollowingJob(Properties properties, PARAMS_TYPE taskParams) throws Exception {
+  @NotNull
+  public static String createJobName(TaskParams taskParams, String jobType) {
+    return jobType + " (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId() + ")";
+  }
+
+  protected abstract String mainOperatorName();
+
+  protected abstract FollowingJobMainOperator createMainOperator(Properties properties, PARAMS_TYPE taskParams);
+
+  protected JobExecutionResult execute() throws Exception {
+    LOGGER.info("Executing the Job...");
+    JobExecutionResult result = flinkEnvironment.execute(jobName);
+    LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
+        result);
+    return result;
+  }
+
+  @Override
+  protected void setupJob(Properties properties, PARAMS_TYPE taskParams) throws Exception {
     LOGGER.info("Creating {} for execution: {}, with execution parameters: {}",
         getClass().getSimpleName(), taskParams.getExecutionId(), taskParams);
     this.taskParams = taskParams;
@@ -65,21 +83,4 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
                  .build();
     LOGGER.info("Created the Job");
   }
-
-  @NotNull
-  public static String createJobName(TaskParams taskParams, String jobType) {
-    return jobType + " (dataset: " + taskParams.getDatasetId() + ", execution: " + taskParams.getExecutionId() + ")";
-  }
-
-  protected abstract String mainOperatorName();
-
-  protected abstract FollowingJobMainOperator createMainOperator(Properties properties, PARAMS_TYPE taskParams);
-
-  protected void execute() throws Exception {
-    LOGGER.info("Executing the Job...");
-    JobExecutionResult result = flinkEnvironment.execute(jobName);
-    LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
-        result);
-  }
-
 }
