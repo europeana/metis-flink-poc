@@ -37,11 +37,11 @@ public class WorkflowExecutorFullCycle {
       int parallelism = tool.getInt("parallelism", 1);
       SubmitJobRequest oaiRequest = StepFactories.createOAIRequest(datasetId, executionId, oaiHarvest, parallelism);
       LOGGER.info("{} {}", oaiRequest.getEntryClass(), oaiRequest.getProgramArgs());
-      GenericJob job = GenericJobFactory.createJob(oaiRequest.getEntryClass());
-      String[] arguments = oaiRequest.getProgramArgs().split(" ");
-      JobExecutionResult jobExecutionResult = job.executeJob(arguments);
-      LOGGER.info("result OAI {}", jobExecutionResult);
+      GenericJob startStep = GenericJobFactory.createJob(oaiRequest.getEntryClass());
 
+      String[] arguments = oaiRequest.getProgramArgs().split(" ");
+      JobExecutionResult jobExecutionResult = startStep.executeJob(arguments);
+      LOGGER.info("result OAI {}", jobExecutionResult);
       for (StepFactories.FollowingJobRequestFactory factory : StepFactories.LIST) {
         UUID previousExecutionId = executionId;
         executionId = UUIDs.timeBased();

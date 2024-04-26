@@ -41,10 +41,16 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
   protected abstract FollowingJobMainOperator createMainOperator(Properties properties, PARAMS_TYPE taskParams);
 
   protected JobExecutionResult execute() throws Exception {
-    LOGGER.info("Executing the Job...");
-    JobExecutionResult result = flinkEnvironment.execute(jobName);
-    LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
-        result);
+    JobExecutionResult result;
+    try {
+      LOGGER.info("Executing the Job...");
+      result = flinkEnvironment.execute(jobName);
+      LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
+          result);
+    } finally {
+      flinkEnvironment.close();
+    }
+
     return result;
   }
 

@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.oai.OAIJob" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies_psnc/oai.cfg --datasetId 5 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /job-config/oai_job.properties --datasetId 5 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>

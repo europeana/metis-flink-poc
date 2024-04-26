@@ -7,14 +7,14 @@ metadata:
 data:
   flink-conf.yaml: |+
     jobmanager.rpc.address: flink-jobmanager
-    taskmanager.numberOfTaskSlots: 4
+    taskmanager.numberOfTaskSlots: 12
     blob.server.port: 6124
     jobmanager.rpc.port: 6123
     taskmanager.rpc.port: 6122
-    jobmanager.memory.process.size: 2728m
-    taskmanager.memory.process.size: 2728m
-    taskmanager.memory.jvm-metaspace.size: 512MB
-    jobmanager.memory.jvm-metaspace.size: 512MB
+    jobmanager.memory.process.size: 8192m
+    taskmanager.memory.process.size: 8192m
+    taskmanager.memory.jvm-metaspace.size: 1024MB
+    jobmanager.memory.jvm-metaspace.size: 1024MB
     parallelism.default: 2
     env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps"
     web.upload.dir: /web-upload
