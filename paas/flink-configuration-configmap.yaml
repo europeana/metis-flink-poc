@@ -7,7 +7,7 @@ metadata:
 data:
   flink-conf.yaml: |+
     jobmanager.rpc.address: flink-jobmanager
-    taskmanager.numberOfTaskSlots: 12
+    taskmanager.numberOfTaskSlots: 2
     blob.server.port: 6124
     jobmanager.rpc.port: 6123
     taskmanager.rpc.port: 6122
@@ -36,6 +36,9 @@ data:
     rootLogger.level = INFO
     rootLogger.appenderRef.console.ref = ConsoleAppender
     rootLogger.appenderRef.rolling.ref = RollingFileAppender
+    #Custom
+    logger.poc.name = eu.europeana.cloud.flink
+    logger.poc.level = DEBUG
 
     # Uncomment this if you want to _only_ change Flink's logging
     #logger.flink.name = org.apache.flink

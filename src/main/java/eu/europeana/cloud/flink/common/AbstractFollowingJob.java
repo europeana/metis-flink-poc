@@ -15,6 +15,7 @@ import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyProper
 import java.util.Properties;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -59,10 +60,10 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
     flinkEnvironment.getCheckpointConfig().setCheckpointStorage(new FileSystemCheckpointStorage(PATH_FLINK_JOBS_CHECKPOINTS));
     flinkEnvironment.registerJobListener(new CheckpointCleanupListener());
-    DataStreamSource<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams)
+    DataStream<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams)
         //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
         //TODO The command rebalance does not work for this source for some reasons. To investigate
-        .setParallelism(1);
+        .rebalance();
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator()).name("Prepare DB entity")
               .process(createMainOperator(properties, taskParams)).name(mainOperatorName());

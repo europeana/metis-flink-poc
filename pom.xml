@@ -13,9 +13,9 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flink.version>1.18.1</flink.version>
-        <ecloud.version>12-SNAPSHOT</ecloud.version>
-        <metis.version>13-SNAPSHOT</metis.version>
-        <metis.normalization.version>14-SNAPSHOT</metis.normalization.version>
+        <ecloud.version>12</ecloud.version>
+        <metis.version>12</metis.version>
+        <metis.normalization.version>13</metis.normalization.version>
         <version.corelib>2.16.8</version.corelib>
         <version.spring-framework>6.1.4</version.spring-framework>
     </properties>

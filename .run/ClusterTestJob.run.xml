@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.clustertest.ClusterTestJob" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies_psnc/oai.cfg --datasetId 5 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm" />
+    <option name="PROGRAM_PARAMETERS" value="20" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="eu.europeana.cloud.flink.clustertest.*" />

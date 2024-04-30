@@ -7,7 +7,7 @@ metadata:
     app: apache-dashboard
   name: apache-dashboard
 spec:
-  host: flink-dashboard.apps.dcw1.paas.psnc.pl
+  host: flink-dashboard-k.apps.dcw1.paas.psnc.pl
   port:
     targetPort: 8080-tcp
   tls:

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: taskmanager
-          image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc
+          image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest-k
           imagePullPolicy: Always
           args: ["taskmanager"]
           ports:

@@ -3,7 +3,6 @@ package eu.europeana.cloud.flink.clustertest;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.PATH_FLINK_JOBS_CHECKPOINTS;
 
 import eu.europeana.cloud.flink.common.CheckpointCleanupListener;
-import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 public class ClusterTestJob {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterTestJob.class);
+  public static final long DEFAULT_JOB_SIZE = 30L;
 
   private static StreamExecutionEnvironment flinkEnvironment;
 
@@ -28,12 +28,12 @@ public class ClusterTestJob {
     flinkEnvironment.enableCheckpointing(2000L, CheckpointingMode.AT_LEAST_ONCE);
     flinkEnvironment.configure(config);
     flinkEnvironment.registerJobListener(new CheckpointCleanupListener());
-
-    flinkEnvironment.fromSequence(1, 50).map(
+    long taskSize = args.length > 0 ? Long.parseLong(args[0]) : DEFAULT_JOB_SIZE;
+    flinkEnvironment.fromSequence(1, taskSize).map(
         new SleepOperator()
     );
     JobExecutionResult result = flinkEnvironment.execute("ClusterTestingJob");
-    LOGGER.info("Endend Job. Time elapsed: {} seconds!", result.getNetRuntime(TimeUnit.SECONDS));
+    LOGGER.info("Endend Job. Result: {}", result);
   }
 
 }

@@ -31,7 +31,7 @@ public class XsltOperator extends FollowingJobMainOperator {
 
       StringWriter writer =
           xsltTransformer.transform(tuple.getFileContent(), prepareEuropeanaGeneratedIdsMap(tuple));
-
+      Thread.sleep(1000L);
       return RecordTuple.builder()
                         .recordId(tuple.getRecordId())
                         .fileContent(writer.toString().getBytes(StandardCharsets.UTF_8))
