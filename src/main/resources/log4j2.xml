@@ -29,11 +29,11 @@
     </Appenders>
 
     <Loggers>
-        <Root level="warn">
+        <Root level="ALL">
             <AppenderRef ref="STDOUT"/>
         </Root>
-        <Logger name="eu.europeana" level="info"/>
-        <Logger name="eu.europeana.cloud.flink" level="debug"/>
+        <Logger name="eu.europeana" level="ALL"/>
+        <Logger name="eu.europeana.cloud.flink" level="ALL"/>
 
         <Logger name="org.apache.flink.connector.cassandra.source" level="debug"/>
         <Logger name="org.apache.flink.streaming.connectors.cassandra" level="debug"/>

@@ -27,7 +27,6 @@ public class WorkflowExecutorWithAPI {
   private JobExecutor jobExecutor;
   private int parallelism;
 
-
   public WorkflowExecutorWithAPI(Properties serverConfiguration, String datasetId, OaiHarvest oaiHarvest, int parallelism) {
     this.jobExecutor = new JobExecutor(serverConfiguration);
     this.datasetId = datasetId;

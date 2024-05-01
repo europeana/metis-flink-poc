@@ -34,35 +34,57 @@ public class MediaOperator extends FollowingJobMainOperator {
   private transient RdfDeserializer rdfDeserializer;
 
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
-    final byte[] rdfBytes = tuple.getFileContent();
-    final EnrichedRdf enrichedRdf;
-    enrichedRdf = getEnrichedRdf(rdfBytes);
+  public RecordTuple map(RecordTuple tuple) {
+    try {
+      final byte[] rdfBytes = tuple.getFileContent();
+      final EnrichedRdf enrichedRdf;
+      enrichedRdf = getEnrichedRdf(rdfBytes);
 
-    RdfResourceEntry resourceMainThumbnail = rdfDeserializer.getMainThumbnailResourceForMediaExtraction(rdfBytes);
-    boolean hasMainThumbnail = false;
-    if (resourceMainThumbnail != null) {
-      hasMainThumbnail = processResourceWithoutThumbnail(resourceMainThumbnail,
-          tuple.getRecordId(), enrichedRdf, mediaExtractor);
-    }
-    List<RdfResourceEntry> remainingResourcesList = rdfDeserializer.getRemainingResourcesForMediaExtraction(rdfBytes);
-    if (hasMainThumbnail) {
-      remainingResourcesList.forEach(entry ->
-          processResourceWithThumbnail(entry, tuple.getRecordId(), enrichedRdf,
-              mediaExtractor)
-      );
-    } else {
-      remainingResourcesList.forEach(entry ->
-          processResourceWithoutThumbnail(entry, tuple.getRecordId(), enrichedRdf,
-              mediaExtractor)
-      );
-    }
-    final byte[]
-    outputRdfBytes = getOutputRdf(enrichedRdf);
+      RdfResourceEntry resourceMainThumbnail = rdfDeserializer.getMainThumbnailResourceForMediaExtraction(rdfBytes);
+      boolean hasMainThumbnail = false;
+      if (resourceMainThumbnail != null) {
+        hasMainThumbnail = processResourceWithoutThumbnail(resourceMainThumbnail,
+            tuple.getRecordId(), enrichedRdf, mediaExtractor);
+      }
+      List<RdfResourceEntry> remainingResourcesList = rdfDeserializer.getRemainingResourcesForMediaExtraction(rdfBytes);
+      if (hasMainThumbnail) {
+        remainingResourcesList.forEach(entry ->
+            processResourceWithThumbnail(entry, tuple.getRecordId(), enrichedRdf,
+                mediaExtractor)
+        );
+      } else {
+        remainingResourcesList.forEach(entry ->
+            processResourceWithoutThumbnail(entry, tuple.getRecordId(), enrichedRdf,
+                mediaExtractor)
+        );
+      }
+      final byte[] outputRdfBytes = getOutputRdf(enrichedRdf);
 
-    return RecordTuple.builder().recordId(tuple.getRecordId())
-        .fileContent(outputRdfBytes)
-                      .build();
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(outputRdfBytes)
+                        .build();
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
+    }
+  }
+
+  public void open(Configuration parameters) throws DereferenceException, EnrichmentException, MediaProcessorException {
+    final RdfConverterFactory rdfConverterFactory = new RdfConverterFactory();
+    rdfDeserializer = rdfConverterFactory.createRdfDeserializer();
+    rdfSerializer = rdfConverterFactory.createRdfSerializer();
+    final MediaProcessorFactory mediaProcessorFactory = new MediaProcessorFactory();
+    mediaExtractor = mediaProcessorFactory.createMediaExtractor();
+  }
+
+  @Override
+  public void close() throws Exception {
+    mediaExtractor.close();
   }
 
   private EnrichedRdf getEnrichedRdf(byte[] rdfBytes) throws RdfDeserializationException {
@@ -114,18 +136,5 @@ public class MediaOperator extends FollowingJobMainOperator {
     if (nonNull(thumbnails)) {
       LOGGER.debug("Fake storing thumbnail");
     }
-  }
-
-  public void open(Configuration parameters) throws DereferenceException, EnrichmentException, MediaProcessorException {
-    final RdfConverterFactory rdfConverterFactory = new RdfConverterFactory();
-    rdfDeserializer = rdfConverterFactory.createRdfDeserializer();
-    rdfSerializer = rdfConverterFactory.createRdfSerializer();
-    final MediaProcessorFactory mediaProcessorFactory = new MediaProcessorFactory();
-    mediaExtractor = mediaProcessorFactory.createMediaExtractor();
-  }
-
-  @Override
-  public void close() throws Exception {
-    mediaExtractor.close();
   }
 }

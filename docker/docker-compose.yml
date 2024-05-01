@@ -28,32 +28,31 @@ services:
       - /data/solr:/var/solr
 
   flink-jobmanager:
-    build:
-      context: ..
-      dockerfile: Dockerfile
+    image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc
     container_name: flink-rich-poc-jm
     command: jobmanager
     environment:
-      - "FLINK_PROPERTIES = jobmanager.rpc.address: jobmanager \n
-          taskmanager.numberOfTaskSlots: 4 \n
-          blob.server.port: 6124 \n
-          jobmanager.rpc.port: 6123 \n
-          taskmanager.rpc.port: 6122 \n
-          jobmanager.memory.process.size: 2728m \n
-          taskmanager.memory.process.size: 2728m \n
-          taskmanager.memory.jvm-metaspace.size: 512MB \n
-          jobmanager.memory.jvm-metaspace.size: 512MB \n
-          parallelism.default: 2 \n
-          env.java.opts.all: \"-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps\" \n
-          web.upload.dir: /web-upload \n
-          jobstore.expiration-time: 172800 \n
-          jobstore.type: File \n
-          process.jobmanager.working-dir: /working-directory \n
-          state.backend.type: filesystem \n
-          state.checkpoints.dir: file:///data/flink/checkpoints \n                       
-          execution.checkpointing.interval: 5000 \n
-          execution.checkpointing.mode: AT_LEAST_ONCE \n
-          jobmanager.resource-id: poc1"
+       FLINK_PROPERTIES: |+ 
+          jobmanager.rpc.address: jobmanager 
+          taskmanager.numberOfTaskSlots: 4 
+          blob.server.port: 6124 
+          jobmanager.rpc.port: 6123 
+          taskmanager.rpc.port: 6122 
+          jobmanager.memory.process.size: 2728m 
+          taskmanager.memory.process.size: 2728m 
+          taskmanager.memory.jvm-metaspace.size: 512MB 
+          jobmanager.memory.jvm-metaspace.size: 512MB 
+          parallelism.default: 2 
+          env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps" 
+          web.upload.dir: file:///web-upload 
+          jobstore.expiration-time: 172800 
+          jobstore.type: File 
+          process.jobmanager.working-dir: file:///working-directory 
+          state.backend.type: filesystem 
+          state.checkpoints.dir: file:///data/flink/checkpoints                        
+          execution.checkpointing.interval: 5000 
+          execution.checkpointing.mode: AT_LEAST_ONCE
+          jobmanager.resource-id: poc1
     volumes:
       - /data/flink/deployments:/deployments
       - flink-log:/opt/flink/log
@@ -66,37 +65,37 @@ services:
     networks:
       - flink-network
   flink-taskmanager:
-    build:
-      context: ..
-      dockerfile: Dockerfile
+    image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc
     container_name: flink-rich-poc-tm
     command: taskmanager
     environment:
-      - "FLINK_PROPERTIES = jobmanager.rpc.address: jobmanager \n
-           taskmanager.numberOfTaskSlots: 4 \n
-           blob.server.port: 6124 \n
-           jobmanager.rpc.port: 6123 \n
-           taskmanager.rpc.port: 6122 \n
-           jobmanager.memory.process.size: 2728m \n
-           taskmanager.memory.process.size: 2728m \n
-           taskmanager.memory.jvm-metaspace.size: 512MB \n
-           jobmanager.memory.jvm-metaspace.size: 512MB \n
-           parallelism.default: 2 \n
-           env.java.opts.all: \"-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps\" \n
-           web.upload.dir: /web-upload \n
-           jobstore.expiration-time: 172800 \n
-           jobstore.type: File \n
-           process.jobmanager.working-dir: /working-directory \n
-           state.backend.type: filesystem \n
-           state.checkpoints.dir: file:///data/flink/checkpoints \n                       
-           execution.checkpointing.interval: 5000 \n
-           execution.checkpointing.mode: AT_LEAST_ONCE \n
-           jobmanager.resource-id: poc1"
+      FLINK_PROPERTIES: |+
+        jobmanager.rpc.address: jobmanager 
+        taskmanager.numberOfTaskSlots: 4 
+        blob.server.port: 6124 
+        jobmanager.rpc.port: 6123 
+        taskmanager.rpc.port: 6122 
+        jobmanager.memory.process.size: 2728m 
+        taskmanager.memory.process.size: 2728m 
+        taskmanager.memory.jvm-metaspace.size: 512MB 
+        jobmanager.memory.jvm-metaspace.size: 512MB 
+        parallelism.default: 2 
+        env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps" 
+        web.upload.dir: file:///web-upload 
+        jobstore.expiration-time: 172800 
+        jobstore.type: File 
+        process.jobmanager.working-dir: file:///working-directory 
+        state.backend.type: filesystem 
+        state.checkpoints.dir: file:///data/flink/checkpoints                        
+        execution.checkpointing.interval: 5000 
+        execution.checkpointing.mode: AT_LEAST_ONCE
+        jobmanager.resource-id: poc1
     ports:
       - '6122:6122'
     networks:
       - flink-network
-
+    depends_on:
+      - flink-jobmanager
 networks:
   flink-network:
 

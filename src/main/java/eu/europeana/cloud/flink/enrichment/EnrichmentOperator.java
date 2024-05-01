@@ -42,16 +42,25 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
 
   @Override
   public RecordTuple map(RecordTuple tuple) throws Exception {
-    ProcessedResult<String> enrichmentResult =
-        enrichmentWorker.process(new String(tuple.getFileContent(), StandardCharsets.UTF_8));
-    if (enrichmentResult.getRecordStatus() != RecordStatus.CONTINUE) {
-      String reportString = enrichmentResult.getReport().stream().map(Object::toString).collect(Collectors.joining("\n"));
-      throw new RuntimeException("Enrichment ended with error!:\n" + reportString);
+    try {
+      ProcessedResult<String> enrichmentResult =
+          enrichmentWorker.process(new String(tuple.getFileContent(), StandardCharsets.UTF_8));
+      if (enrichmentResult.getRecordStatus() != RecordStatus.CONTINUE) {
+        String reportString = enrichmentResult.getReport().stream().map(Object::toString).collect(Collectors.joining("\n"));
+        throw new RuntimeException("Enrichment ended with error!:\n" + reportString);
+      }
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
+                        .build();
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
     }
-    return RecordTuple.builder()
-                      .recordId(tuple.getRecordId())
-                      .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
-                      .build();
   }
 
 

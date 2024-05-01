@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.workflow.WorkflowExecutorWithAPI" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/workflow/workflow_executor_psnc.properties --datasetId 12 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/workflow_executor_psnc.properties --datasetId 14 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>

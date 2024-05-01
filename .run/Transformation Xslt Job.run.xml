@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.xslt.XsltJob" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies/media.cfg --xsltUrl https://metis-core-rest.test.eanadev.org/datasets/xslt/default --datasetId 5 --previousStepId bd969210-f357-11ee-b02f-9535ac9a3dc9" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/media_job.properties --xsltUrl https://metis-core-rest.test.eanadev.org/datasets/xslt/default --datasetId 5 --previousStepId bd969210-f357-11ee-b02f-9535ac9a3dc9" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>

@@ -42,15 +42,10 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
 
   protected JobExecutionResult execute() throws Exception {
     JobExecutionResult result;
-    try {
       LOGGER.info("Executing the Job...");
       result = flinkEnvironment.execute(jobName);
       LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
           result);
-    } finally {
-      flinkEnvironment.close();
-    }
-
     return result;
   }
 
@@ -68,7 +63,6 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
         //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
         //TODO The command rebalance does not work for this source for some reasons. To investigate
         .setParallelism(1);
-
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator()).name("Prepare DB entity")
               .process(createMainOperator(properties, taskParams)).name(mainOperatorName());

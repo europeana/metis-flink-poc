@@ -18,8 +18,15 @@ public abstract class FollowingJobMainOperator extends ProcessFunction<RecordTup
   public final void processElement(RecordTuple tuple,
       ProcessFunction<RecordTuple, RecordTuple>.Context context, Collector<RecordTuple> out) {
     try {
-      out.collect(map(tuple));
-      LOGGER.debug("Processed record, id: {}", tuple.getRecordId());
+      tuple = map(tuple);
+      out.collect(tuple);
+      if (!tuple.getErrorMessage().isBlank()) {
+        context.output(ERROR_STREAM_TAG, ErrorTuple.builder()
+                                                   .recordId(tuple.getRecordId())
+                                                   .exception(new Exception(tuple.getErrorMessage()))
+                                                   .build());
+      }
+      LOGGER.info("Processed record, id: {}", tuple.getRecordId());
     } catch (Exception e) {
       LOGGER.warn("{} exception: {}", getClass().getName(), tuple.getRecordId(), e);
       context.output(ERROR_STREAM_TAG, ErrorTuple.builder()
