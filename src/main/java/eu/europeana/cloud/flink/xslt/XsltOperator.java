@@ -25,7 +25,7 @@ public class XsltOperator extends FollowingJobMainOperator {
   @SuppressWarnings("resource") //Ignoring AutoClosable interface of XsltTransformer, cause close method
   // closes static resource, so looks to be improper. The same is in the XsltBolt in the eCloud code.
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
+  public RecordTuple map(RecordTuple tuple) {
     try {
       final XsltTransformer xsltTransformer = prepareXsltTransformer();
 
@@ -40,7 +40,7 @@ public class XsltOperator extends FollowingJobMainOperator {
       LOGGER.error(e.getMessage(), e);
       return RecordTuple.builder()
                         .recordId(tuple.getRecordId())
-                        .fileContent(new byte[]{})
+                        .fileContent(tuple.getFileContent())
                         .errorMessage(e.getMessage())
                         .build();
     }

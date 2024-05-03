@@ -15,7 +15,7 @@ public abstract class GenericJob<T> {
 
   protected abstract JobExecutionResult execute() throws Exception;
 
-  public JobExecutionResult executeJob(String[] args) throws Exception, IOException {
+  public JobExecutionResult executeJob(String[] args) throws Exception {
     JobParameters<T> parameters = prepareParameters(args);
     setupJob(readProperties(parameters.getTool().getRequired(CONFIGURATION_FILE_PATH)), parameters.getTaskParameters());
     return execute();

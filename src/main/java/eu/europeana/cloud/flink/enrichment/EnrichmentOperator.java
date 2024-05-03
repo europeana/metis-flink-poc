@@ -41,7 +41,7 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
   }
 
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
+  public RecordTuple map(RecordTuple tuple) {
     try {
       ProcessedResult<String> enrichmentResult =
           enrichmentWorker.process(new String(tuple.getFileContent(), StandardCharsets.UTF_8));

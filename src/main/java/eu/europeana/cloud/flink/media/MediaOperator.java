@@ -4,15 +4,12 @@ import static java.util.Objects.nonNull;
 
 import eu.europeana.cloud.flink.common.FollowingJobMainOperator;
 import eu.europeana.cloud.flink.common.tuples.RecordTuple;
-import eu.europeana.enrichment.rest.client.exceptions.DereferenceException;
-import eu.europeana.enrichment.rest.client.exceptions.EnrichmentException;
 import eu.europeana.metis.mediaprocessing.MediaExtractor;
 import eu.europeana.metis.mediaprocessing.MediaProcessorFactory;
 import eu.europeana.metis.mediaprocessing.RdfConverterFactory;
 import eu.europeana.metis.mediaprocessing.RdfDeserializer;
 import eu.europeana.metis.mediaprocessing.RdfSerializer;
 import eu.europeana.metis.mediaprocessing.exception.MediaExtractionException;
-import eu.europeana.metis.mediaprocessing.exception.MediaProcessorException;
 import eu.europeana.metis.mediaprocessing.exception.RdfDeserializationException;
 import eu.europeana.metis.mediaprocessing.exception.RdfSerializationException;
 import eu.europeana.metis.mediaprocessing.model.EnrichedRdf;
@@ -74,12 +71,16 @@ public class MediaOperator extends FollowingJobMainOperator {
     }
   }
 
-  public void open(Configuration parameters) throws DereferenceException, EnrichmentException, MediaProcessorException {
-    final RdfConverterFactory rdfConverterFactory = new RdfConverterFactory();
-    rdfDeserializer = rdfConverterFactory.createRdfDeserializer();
-    rdfSerializer = rdfConverterFactory.createRdfSerializer();
-    final MediaProcessorFactory mediaProcessorFactory = new MediaProcessorFactory();
-    mediaExtractor = mediaProcessorFactory.createMediaExtractor();
+  public void open(Configuration parameters) {
+    try {
+      final RdfConverterFactory rdfConverterFactory = new RdfConverterFactory();
+      rdfDeserializer = rdfConverterFactory.createRdfDeserializer();
+      rdfSerializer = rdfConverterFactory.createRdfSerializer();
+      final MediaProcessorFactory mediaProcessorFactory = new MediaProcessorFactory();
+      mediaExtractor = mediaProcessorFactory.createMediaExtractor();
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+    }
   }
 
   @Override

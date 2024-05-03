@@ -28,12 +28,12 @@ services:
       - /data/solr:/var/solr
 
   flink-jobmanager:
-    image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc
+    image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest
     container_name: flink-rich-poc-jm
     command: jobmanager
     environment:
        FLINK_PROPERTIES: |+ 
-          jobmanager.rpc.address: jobmanager 
+          jobmanager.rpc.address: flink-jobmanager 
           taskmanager.numberOfTaskSlots: 4 
           blob.server.port: 6124 
           jobmanager.rpc.port: 6123 
@@ -44,19 +44,23 @@ services:
           jobmanager.memory.jvm-metaspace.size: 512MB 
           parallelism.default: 2 
           env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps" 
-          web.upload.dir: file:///web-upload 
+          web.upload.dir: /web-upload 
           jobstore.expiration-time: 172800 
           jobstore.type: File 
-          process.jobmanager.working-dir: file:///working-directory 
+          process.jobmanager.working-dir: /working-directory 
           state.backend.type: filesystem 
           state.checkpoints.dir: file:///data/flink/checkpoints                        
-          execution.checkpointing.interval: 5000 
+          execution.checkpointing.interval: 30000
+          execution.checkpointing.min-pause: 30000
+          execution.checkpointing.tolerable-failed-checkpoints: 5
           execution.checkpointing.mode: AT_LEAST_ONCE
           jobmanager.resource-id: poc1
     volumes:
-      - /data/flink/deployments:/deployments
-      - flink-log:/opt/flink/log
+      - /data/flink/deployments:/deployments:rw
       - /data/flink/jobs-config:/jobs-config
+      - /data/flink/working-directory:/working-directory:rw
+      - /data/flink/web-upload:/web-upload:rw
+      - /data/flink/log:/opt/flink/log:rw
       - flink-checkpoints:/data/flink/checkpoints
     ports:
       - '6123:6123'
@@ -67,6 +71,7 @@ services:
   flink-taskmanager:
     image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc
     container_name: flink-rich-poc-tm
+    user: 1000:1000
     command: taskmanager
     environment:
       FLINK_PROPERTIES: |+
@@ -81,17 +86,21 @@ services:
         jobmanager.memory.jvm-metaspace.size: 512MB 
         parallelism.default: 2 
         env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps" 
-        web.upload.dir: file:///web-upload 
+        web.upload.dir: /web-upload 
         jobstore.expiration-time: 172800 
         jobstore.type: File 
-        process.jobmanager.working-dir: file:///working-directory 
+        process.jobmanager.working-dir: /working-directory 
         state.backend.type: filesystem 
         state.checkpoints.dir: file:///data/flink/checkpoints                        
-        execution.checkpointing.interval: 5000 
+        execution.checkpointing.interval: 30000
+        execution.checkpointing.min-pause: 30000
+        execution.checkpointing.tolerable-failed-checkpoints: 5
         execution.checkpointing.mode: AT_LEAST_ONCE
         jobmanager.resource-id: poc1
     ports:
       - '6122:6122'
+    volumes:
+      - /data/flink/log:/opt/flink/log:rw
     networks:
       - flink-network
     depends_on:

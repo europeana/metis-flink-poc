@@ -21,10 +21,10 @@ public class WorkflowExecutorFullCycle {
   private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowExecutorFullCycle.class);
 
   public static void main(String[] args) {
-    execute(args);
+    new WorkflowExecutorFullCycle().execute(args);
   }
 
-  private static void execute(String[] args) {
+  private void execute(String[] args) {
     try {
       LOGGER.info("Starting workflow.");
       ParameterTool tool = ParameterTool.fromArgs(args);
@@ -50,7 +50,7 @@ public class WorkflowExecutorFullCycle {
         arguments = currentStep.getProgramArgs().split(" ");
         GenericJob nextStep = GenericJobFactory.createJob(currentStep.getEntryClass());
         jobExecutionResult = nextStep.executeJob(arguments);
-        LOGGER.info("result {}", jobExecutionResult);
+        LOGGER.info("result {} {}", currentStep.getEntryClass(), jobExecutionResult);
       }
       LOGGER.info("Completed workflow.");
     } catch (Exception e) {

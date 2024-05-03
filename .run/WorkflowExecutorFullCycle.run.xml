@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.workflow.WorkflowExecutorFullCycle" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--datasetId 30 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm" />
+    <option name="PROGRAM_PARAMETERS" value="--datasetId 22 --oaiRepositoryUrl https://metis-repository-rest.test.eanadev.org/repository/oai --setSpec all_types --metadataPrefix edm" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <method v="2">
       <option name="Make" enabled="true" />

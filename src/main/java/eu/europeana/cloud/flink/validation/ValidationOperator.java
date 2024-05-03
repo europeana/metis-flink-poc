@@ -42,15 +42,20 @@ public class ValidationOperator extends FollowingJobMainOperator {
     }
   }
 
-  public void open(Configuration parameters) throws TransformationException {
-    Properties validationProperties = new Properties();
-    PropertyFileLoader.loadPropertyFile(VALIDATION_PROPERTIES_FILE, "", validationProperties);
-    validationService = new ValidationExecutionService(validationProperties);
-    final String sorterFileLocation = validationProperties.get(ValidationTopologyPropertiesKeys.EDM_SORTER_FILE_LOCATION)
-                                                          .toString();
-    LOGGER.info("Preparing XsltTransformer for {}", sorterFileLocation);
-    transformer = new XsltTransformer(sorterFileLocation);
-    LOGGER.info("Created validation operator.");
+  @Override
+  public void open(Configuration parameters) {
+    try {
+      Properties validationProperties = new Properties();
+      PropertyFileLoader.loadPropertyFile(VALIDATION_PROPERTIES_FILE, "", validationProperties);
+      validationService = new ValidationExecutionService(validationProperties);
+      final String sorterFileLocation = validationProperties.get(ValidationTopologyPropertiesKeys.EDM_SORTER_FILE_LOCATION)
+                                                            .toString();
+      LOGGER.info("Preparing XsltTransformer for {}", sorterFileLocation);
+      transformer = new XsltTransformer(sorterFileLocation);
+      LOGGER.info("Created validation operator.");
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+    }
   }
 
   @Override

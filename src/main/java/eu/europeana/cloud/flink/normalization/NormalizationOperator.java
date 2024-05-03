@@ -47,8 +47,8 @@ public class NormalizationOperator extends FollowingJobMainOperator {
 
   @Override
   public void open(Configuration parameters) {
-    normalizerFactory = new NormalizerFactory();
-    LOGGER.info("Created normalization operator.");
+      normalizerFactory = new NormalizerFactory();
+      LOGGER.info("Created normalization operator.");
   }
 
 }

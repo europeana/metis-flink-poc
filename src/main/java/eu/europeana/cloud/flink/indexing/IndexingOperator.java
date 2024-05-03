@@ -10,7 +10,6 @@ import eu.europeana.indexing.IndexingProperties;
 import eu.europeana.indexing.IndexingSettings;
 import eu.europeana.indexing.exception.IndexingException;
 import eu.europeana.indexing.tiers.model.MediaTier;
-import eu.europeana.metis.transformation.service.TransformationException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,7 +30,7 @@ public class IndexingOperator extends FollowingJobMainOperator {
   }
 
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
+  public RecordTuple map(RecordTuple tuple) {
     try {
       boolean recordNotSuitableForPublication = !indexRecord(tuple);
       if (recordNotSuitableForPublication) {
@@ -51,12 +50,16 @@ public class IndexingOperator extends FollowingJobMainOperator {
   }
 
   @Override
-  public void open(Configuration parameters) throws TransformationException, IndexingException, URISyntaxException {
-    executionIndexingProperties = new IndexingProperties(taskParams.getRecordDate(), taskParams.isPreserveTimestamps(),
-        taskParams.getDatasetIdsForRedirection(), taskParams.isPerformRedirects(), true);
-    IndexerFactory indexerFactory = new IndexerFactory(prepareIndexingSettings());
-    indexer = indexerFactory.getIndexer();
-    LOGGER.info("Created indexing operator.");
+  public void open(Configuration parameters) {
+    try {
+      executionIndexingProperties = new IndexingProperties(taskParams.getRecordDate(), taskParams.isPreserveTimestamps(),
+          taskParams.getDatasetIdsForRedirection(), taskParams.isPerformRedirects(), true);
+      IndexerFactory indexerFactory = new IndexerFactory(prepareIndexingSettings());
+      indexer = indexerFactory.getIndexer();
+      LOGGER.info("Created indexing operator.");
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+    }
   }
 
   @Override
