@@ -28,6 +28,9 @@ data:
     execution.checkpointing.min-pause: 30000 
     execution.checkpointing.tolerable-failed-checkpoints: 5
     execution.checkpointing.mode: AT_LEAST_ONCE
+    jobmanager.scheduler: adaptive
+    slot.idle.timeout: 5000
+    slot.request.timeout: 20000
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO
