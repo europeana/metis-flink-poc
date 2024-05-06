@@ -2,6 +2,7 @@ package eu.europeana.cloud.flink.validation;
 
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.PREVIOUS_STEP_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.ROOT_LOCATION;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.SCHEMATRON_LOCATION;
@@ -44,6 +45,7 @@ public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
         .schemaName(tool.getRequired(SCHEMA_NAME))
         .rootLocation(tool.getRequired(ROOT_LOCATION))
         .schematronLocation(tool.get(SCHEMATRON_LOCATION))
+        .parallelism(tool.getInt(PARALLELISM, 1))
         .build();
     return new JobParameters<>(tool, taskParams);
   }

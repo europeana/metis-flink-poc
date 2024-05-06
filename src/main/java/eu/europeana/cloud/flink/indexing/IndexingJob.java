@@ -4,6 +4,7 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_IDS_TO_REDIRECT_FROM;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.INDEXING_PROPERTIES_FILE_PATH;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.PERFORM_REDIRECTS;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.PRESERVE_TIMESTAMPS;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.PREVIOUS_STEP_ID;
@@ -62,6 +63,7 @@ public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
                                                               .toList())
                                           .orElse(Collections.emptyList()))
         .indexingProperties(readProperties(tool.getRequired(INDEXING_PROPERTIES_FILE_PATH)))
+        .parallelism(tool.getInt(PARALLELISM, 1))
         .build();
     return new JobParameters<>(tool, taskParams);
   }

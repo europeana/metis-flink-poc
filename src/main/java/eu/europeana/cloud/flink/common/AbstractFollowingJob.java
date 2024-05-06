@@ -62,17 +62,20 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     DataStreamSource<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams)
         //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
         //TODO The command rebalance does not work for this source for some reasons. To investigate
-        .setParallelism(1);
+        .setParallelism(taskParams.getParallelism());
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator()).name("Prepare DB entity")
-              .process(createMainOperator(properties, taskParams)).name(mainOperatorName());
+              .process(createMainOperator(properties, taskParams)).name(mainOperatorName())
+            .setParallelism(taskParams.getParallelism());
 
     SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
-        processStream.map(new DbEntityCreatingOperator(jobType, taskParams)).name("Create DB entity");
+        processStream.map(new DbEntityCreatingOperator(jobType, taskParams)).name("Create DB entity")
+            .setParallelism(taskParams.getParallelism());
 
     SingleOutputStreamOperator<RecordExecutionExceptionLogEntity> errorStream =
         processStream.getSideOutput(ERROR_STREAM_TAG)
-                     .map(new DbErrorEntityCreatingOperator(jobType, taskParams)).name("Create exception DB entity");
+                     .map(new DbErrorEntityCreatingOperator(jobType, taskParams)).name("Create exception DB entity")
+            .setParallelism(taskParams.getParallelism());
 
     CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
     CassandraSink.addSink(resultStream)

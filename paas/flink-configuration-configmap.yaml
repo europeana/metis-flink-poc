@@ -16,7 +16,7 @@ data:
     taskmanager.memory.jvm-metaspace.size: 512MB
     jobmanager.memory.jvm-metaspace.size: 512MB
     parallelism.default: 2
-    env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps"
+    env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps --add-opens java.base/jdk.internal.misc=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true"
     web.upload.dir: /web-upload
     jobstore.expiration-time: 172800
     jobstore.type: File
