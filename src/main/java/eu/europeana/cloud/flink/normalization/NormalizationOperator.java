@@ -34,6 +34,16 @@ public class NormalizationOperator extends FollowingJobMainOperator {
     }
   }
 
+  @Override
+  public void open(Configuration parameters) {
+    try {
+      normalizerFactory = new NormalizerFactory();
+      LOGGER.info("Created normalization operator.");
+    } catch (Exception e) {
+      LOGGER.warn("Normalization service not available {}", e.getMessage(), e);
+    }
+  }
+
   private String getNormalizedRecord(RecordTuple tuple) throws NormalizationConfigurationException, NormalizationException {
     final Normalizer normalizer = normalizerFactory.getNormalizer();
     String document = new String(tuple.getFileContent(), StandardCharsets.UTF_8);
@@ -43,12 +53,6 @@ public class NormalizationOperator extends FollowingJobMainOperator {
           "Unable to normalize file: " + tuple.getRecordId() + " - " + normalizationResult.getErrorMessage());
     }
     return normalizationResult.getNormalizedRecordInEdmXml();
-  }
-
-  @Override
-  public void open(Configuration parameters) {
-      normalizerFactory = new NormalizerFactory();
-      LOGGER.info("Created normalization operator.");
   }
 
 }

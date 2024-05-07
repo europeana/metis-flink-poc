@@ -54,7 +54,7 @@ public class ValidationOperator extends FollowingJobMainOperator {
       transformer = new XsltTransformer(sorterFileLocation);
       LOGGER.info("Created validation operator.");
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      LOGGER.warn("Validation service not available {}", e.getMessage(), e);
     }
   }
 

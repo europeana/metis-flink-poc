@@ -58,7 +58,7 @@ public class IndexingOperator extends FollowingJobMainOperator {
       indexer = indexerFactory.getIndexer();
       LOGGER.info("Created indexing operator.");
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      LOGGER.warn("Indexing service not available {}", e.getMessage(), e);
     }
   }
 

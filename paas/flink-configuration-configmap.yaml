@@ -24,6 +24,7 @@ data:
     jobmanager.resource-id: poc1
     state.backend.type: filesystem
     state.checkpoints.dir: file:///data/flink/checkpoints
+    execution.runtime-mode: STREAMING
     execution.checkpointing.interval: 30000
     execution.checkpointing.min-pause: 30000 
     execution.checkpointing.tolerable-failed-checkpoints: 5
