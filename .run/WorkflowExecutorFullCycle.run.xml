@@ -4,7 +4,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.workflow.WorkflowExecutorFullCycle" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--datasetId 47 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm --parallelism 5" />
+    <option name="PROGRAM_PARAMETERS" value="--datasetId 52 --oaiRepositoryUrl https://dnet-prod.efg.d4science.org/efg/mvc/oai/oai.do --setSpec ivac --metadataPrefix edm --parallelism 1" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true" />
     <method v="2">
       <option name="Make" enabled="true" />

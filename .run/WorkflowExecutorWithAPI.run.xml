@@ -4,7 +4,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.workflow.WorkflowExecutorWithAPI" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/workflow_executor_psnc.properties --datasetId 46 --oaiRepositoryUrl https://metis-repository-rest.test.eanadev.org/repository/oai --setSpec all_types --metadataPrefix edm --parallelism 5" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/workflow_executor_psnc.properties --datasetId 53 --oaiRepositoryUrl https://metis-repository-rest.test.eanadev.org/repository/oai --setSpec all_types --metadataPrefix edm --parallelism 2" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true" />
     <extension name="coverage">
       <pattern>
