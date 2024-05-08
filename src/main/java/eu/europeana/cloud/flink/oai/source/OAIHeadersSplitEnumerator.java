@@ -2,6 +2,7 @@ package eu.europeana.cloud.flink.oai.source;
 
 import java.io.IOException;
 import java.util.List;
+import org.apache.flink.api.connector.source.SourceEvent;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,10 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, OAIE
   @Override
   public OAIEnumeratorState snapshotState(long checkpointId) throws Exception {
     return state;
+  }
+
+  public void handleSourceEvent(int subtaskId, SourceEvent sourceEvent) {
+    LOGGER.error("SourceEventHere. SubtaskId: {}, event: {}", subtaskId, sourceEvent);
   }
 
   @Override
