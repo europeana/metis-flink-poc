@@ -1,8 +1,7 @@
 package eu.europeana.cloud.flink.oai.source;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.util.Date;
+import java.nio.charset.StandardCharsets;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +21,12 @@ public class OAIEnumeratorStateSerializer  implements SimpleVersionedSerializer<
 
   @Override
   public byte[] serialize(OAIEnumeratorState oaiEnumeratorState) throws IOException {
-    return new byte[0];
+    return String.valueOf(oaiEnumeratorState.isSplitAssigned()).getBytes(StandardCharsets.UTF_8);
   }
 
   @Override
   public OAIEnumeratorState deserialize(int i, byte[] bytes) throws IOException {
-    return new OAIEnumeratorState();
+    boolean assigned = Boolean.parseBoolean(new String(bytes, StandardCharsets.UTF_8));
+    return OAIEnumeratorState.builder().splitAssigned(assigned).build();
   }
 }

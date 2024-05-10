@@ -6,9 +6,11 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.METADATA_PREFIX;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PATH_FLINK_JOBS_CHECKPOINTS;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
+import eu.europeana.cloud.flink.common.CheckpointCleanupListener;
 import eu.europeana.cloud.flink.common.GenericJob;
 import eu.europeana.cloud.flink.common.JobParameters;
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
@@ -29,8 +31,12 @@ import java.util.Properties;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.cassandra.CassandraSink;
 import org.slf4j.Logger;
@@ -83,12 +89,25 @@ public class OAIJob extends GenericJob<OAITaskParams> {
     final String jobType = properties.getProperty(TopologyPropertyKeys.TOPOLOGY_NAME);
     jobName = createJobName(taskParams, jobType);
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
+    flinkEnvironment.enableCheckpointing(5000, CheckpointingMode.EXACTLY_ONCE);
+    CheckpointConfig checkpointConfig = flinkEnvironment.getCheckpointConfig();
+    checkpointConfig.setCheckpointStorage(new FileSystemCheckpointStorage(PATH_FLINK_JOBS_CHECKPOINTS));
+    checkpointConfig.enableUnalignedCheckpoints(true);
+    //checkpointConfig.setForceUnalignedCheckpoints(true);
+    //checkpointConfig.setMaxConcurrentCheckpoints(100);
+    checkpointConfig.setCheckpointTimeout(10000L);
+    checkpointConfig.setMinPauseBetweenCheckpoints(15000L);
+    checkpointConfig.setTolerableCheckpointFailureNumber(100);
 
+
+//    flinkEnvironment.registerJobListener(new CheckpointCleanupListener());
+
+    CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
     DataStreamSource<OaiRecordHeader> source = flinkEnvironment.fromSource(
-        new OAIHeadersSource(taskParams), WatermarkStrategy.noWatermarks(), createSourceName(taskParams)).setParallelism(1);
+        new OAIHeadersSource(taskParams, cassandraClusterBuilder), WatermarkStrategy.noWatermarks(), createSourceName(taskParams)).setParallelism(1);
 
     SingleOutputStreamOperator<HarvestedRecordTuple> harvestedRecordsStream =
-        source.filter(new DeletedRecordFilter()).name("Filter not deleted")
+        source.rebalance().filter(new DeletedRecordFilter()).name("Filter not deleted")
               .process(new RecordHarvestingOperator(taskParams)).name("Harvest record");
 
     SingleOutputStreamOperator<RecordTuple> recordsWithAssignedIdStream =
@@ -97,7 +116,7 @@ public class OAIJob extends GenericJob<OAITaskParams> {
     SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
         recordsWithAssignedIdStream.map(new DbEntityCreatingOperator(jobType, taskParams)).name("Create DB entity");
 
-    CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
+
 
     CassandraSink.addSink(resultStream).setClusterBuilder(cassandraClusterBuilder).build();
 

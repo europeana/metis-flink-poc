@@ -1,5 +1,6 @@
 package eu.europeana.cloud.flink.oai.source;
 
+import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import java.io.IOException;
@@ -13,12 +14,15 @@ import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, OAIEnumeratorState>, ResultTypeQueryable<OaiRecordHeader> {
+public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, OAIEnumeratorState>,
+    ResultTypeQueryable<OaiRecordHeader> {
 
   private final OAITaskParams taskParams;
+  private final CassandraClusterBuilder cassandraClusterBuilder;
 
-  public OAIHeadersSource(OAITaskParams taskParams) {
+  public OAIHeadersSource(OAITaskParams taskParams, CassandraClusterBuilder cassandraClusterBuilder) {
     this.taskParams = taskParams;
+    this.cassandraClusterBuilder = cassandraClusterBuilder;
   }
 
   @Override
@@ -35,11 +39,12 @@ public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, OAIEn
 
   @Override
   public SourceReader<OaiRecordHeader, OAISplit> createReader(SourceReaderContext readerContext) throws Exception {
-    return new OAIHeadersReader(readerContext, taskParams);
+    return new OAIHeadersReader(readerContext, taskParams, cassandraClusterBuilder);
   }
 
   @Override
-  public SplitEnumerator<OAISplit, OAIEnumeratorState> restoreEnumerator(SplitEnumeratorContext<OAISplit> enumContext, OAIEnumeratorState checkpoint)
+  public SplitEnumerator<OAISplit, OAIEnumeratorState> restoreEnumerator(SplitEnumeratorContext<OAISplit> enumContext,
+      OAIEnumeratorState checkpoint)
       throws Exception {
     return new OAIHeadersSplitEnumerator(enumContext, checkpoint);
   }

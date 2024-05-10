@@ -18,3 +18,12 @@ CREATE TABLE execution_record_exception_log
     EXCEPTION      text,
     PRIMARY KEY ((DATASET_ID, EXECUTION_ID), RECORD_ID)
 );
+
+CREATE TABLE oai_iteration_state
+(
+    DATASET_ID     varchar,
+    EXECUTION_ID   varchar,
+    EMITTED_COUNT int,
+    LAST_IDENTIFIER      varchar,
+    PRIMARY KEY ((DATASET_ID, EXECUTION_ID))
+);

@@ -1,17 +1,24 @@
 package eu.europeana.cloud.flink.oai.source;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.oai.OAITaskParams;
-import eu.europeana.metis.harvesting.HarvesterException;
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeaderIterator;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,45 +40,65 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   private static final int SLEEP_TIME = 5000;
   private final SourceReaderContext context;
   private final OAITaskParams taskParams;
+  private final CassandraClusterBuilder cassandraClusterBuilder;
   private CompletableFuture<Void> available = new CompletableFuture<>();
-  private List<OAISplit> splits=new ArrayList<>();
-  BlockingDeque<OaiRecordHeader> deque=new LinkedBlockingDeque<>(100);
+  private List<OAISplit> splits = new ArrayList<>();
+  BlockingDeque<OaiRecordHeader> deque = new LinkedBlockingDeque<>(100);
   private OAISplit harvestedSplit;
   private int count;
+  private String lastOaiIdentifier;
+  private Map<Long, OAIIterationState> checkPointStates = new HashMap<>();
+  private Cluster cassandraCluster;
+  private Session session;
+  private PreparedStatement readStateStatement;
+  private PreparedStatement updateStateStatement;
+  private AtomicBoolean harvestingInBackground = new AtomicBoolean(false);
 
-  public OAIHeadersReader(SourceReaderContext context, OAITaskParams taskParams) {
+  public OAIHeadersReader(SourceReaderContext context, OAITaskParams taskParams,
+      CassandraClusterBuilder cassandraClusterBuilder) {
     this.context = context;
     this.taskParams = taskParams;
-    LOGGER.info("Created oai reader.");
+    this.cassandraClusterBuilder = cassandraClusterBuilder;
+    LOGGER.info("<{}> Created oai reader.", System.identityHashCode(this));
   }
 
   @Override
   public void start() {
+    LOGGER.info("<{}> Starting oai reader.", System.identityHashCode(this));
+    cassandraCluster = cassandraClusterBuilder.getCluster();
+    session = cassandraCluster.connect("flink_poc");
+    prepareStatements();
     LOGGER.info("Started oai reader.");
   }
 
   @Override
   public InputStatus pollNext(ReaderOutput<OaiRecordHeader> output) throws Exception {
-    LOGGER.info("Executed poll: assigned splits: {}", splits);
     if (splits.isEmpty()) {
       available = new CompletableFuture<>();
       context.sendSplitRequest();
+      LOGGER.debug("<{}> Executed poll splits empty, harvestedSplit: {}, returning: {}", System.identityHashCode(this),
+          harvestedSplit, InputStatus.NOTHING_AVAILABLE);
       return InputStatus.NOTHING_AVAILABLE;
-    }else {
+    } else {
+      LOGGER.debug("<{}> Executed poll, assigned splits: {}, harvestedSplit: {}", System.identityHashCode(this), splits,
+          harvestedSplit);
       if (harvestedSplit == null) {
         harvestedSplit = splits.get(0);
-        harvestSplitInBackground( harvestedSplit);
+        harvestSourceInBackground();
       }
-
+      boolean harvesting = harvestingInBackground.get();
       OaiRecordHeader header = deque.poll(10, TimeUnit.SECONDS);
-      if(header!=null){
-        Thread.sleep(1000L);
+      LOGGER.info("<{}> Polled from deque: {}", System.identityHashCode(this), header);
+      if (header != null) {
+//        Thread.sleep(1000L);
         output.collect(header);
-        harvestedSplit.setRecordDone(count++);
-        harvestedSplit.setLastCheckpointedHeader(header.getOaiIdentifier());
+        count++;
+        lastOaiIdentifier = header.getOaiIdentifier();
         return InputStatus.MORE_AVAILABLE;
-      }else {
-        harvestedSplit=null;
+      } else if (harvesting) {
+        return InputStatus.MORE_AVAILABLE;
+      } else {
+        harvestedSplit = null;
         splits.remove(0);
         return InputStatus.END_OF_INPUT;
       }
@@ -79,15 +106,36 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
     }
   }
 
-  private void harvestSplitInBackground(OAISplit split) throws HarvesterException, IOException {
+  private void harvestSourceInBackground() {
 
-    ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> new Thread(runnable,"Reading OAI source"));
-    executor.submit((Callable<Void>) () -> {
+    OAIIterationState restoredState = readStateOfPreviousTaskExecutionFromDB();
+    if(restoredState!=null) {
+      count = restoredState.getCompletedCount();
+    }
+    LOGGER.info("<{}> Restored state: {}", System.identityHashCode(this), restoredState);
+    LOGGER.info("Submitting background harvesting...");
+    harvestingInBackground.set(true);
+    ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> new Thread(runnable,
+        "Reading OAI source: " + System.identityHashCode(this)));
+    executor.submit( () ->      harvestSource(restoredState));
+    executor.shutdown();
+  }
 
+  private void harvestSource(OAIIterationState restoredState) {
+    try {
+      LOGGER.info("<{}> Starting background harvesting...", System.identityHashCode(this));
+      AtomicBoolean restored = new AtomicBoolean(false);
       OaiHarvester harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
       OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(taskParams.getOaiHarvest());
 
       headerIterator.forEach(oaiHeader -> {
+        if (restoredState != null && !restored.get()) {
+          if (oaiHeader.getOaiIdentifier().equals(restoredState.getLastIdentifier())) {
+            restored.set(true);
+          }
+          return IterationResult.CONTINUE;
+        }
+
         try {
           deque.put(oaiHeader);
         } catch (InterruptedException e) {
@@ -96,14 +144,24 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
         return IterationResult.CONTINUE;
       });
       headerIterator.close();
-      return null;
-    });
-    executor.shutdown();
+    } catch (Throwable e) {
+      LOGGER.error("<{}>Could not complete harvesting.", System.identityHashCode(this), e);
+    } finally {
+      harvestingInBackground.set(false);
+    }
   }
 
   @Override
   public List<OAISplit> snapshotState(long checkpointId) {
-    LOGGER.info("Snapshotted state: {}, {}", checkpointId, splits);
+    if(lastOaiIdentifier!=null) {
+      checkPointStates.put(checkpointId, OAIIterationState.builder()
+                                                          .datasetId(taskParams.getDatasetId())
+                                                          .executionId(taskParams.getExecutionId())
+                                                          .lastIdentifier(lastOaiIdentifier)
+                                                          .completedCount(count)
+                                                          .build());
+    }
+    LOGGER.info("Snapshotted state: {}, lastEmittedIdentifier: {} splits: {}", checkpointId, lastOaiIdentifier, splits);
     return splits;
   }
 
@@ -114,7 +172,7 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public void addSplits(List<OAISplit> splits) {
-    LOGGER.info("Adding splits: {}",splits);
+    LOGGER.info("Adding splits: {}", splits);
     this.splits.addAll(splits);
     available.complete(null);
     LOGGER.info("Added split");
@@ -128,12 +186,45 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public void close() throws Exception {
-    LOGGER.info("close");
-    //No needed for now
+    LOGGER.info("<{}>Closing reader...", System.identityHashCode(this));
+    cassandraCluster.close();
+    LOGGER.info("Closed reader!");
   }
 
   @Override
   public void notifyCheckpointComplete(long checkpointId) throws Exception {
-    LOGGER.error("notifyCheckpointComplete: {}", checkpointId);
+    LOGGER.info("notifyCheckpointComplete: {}", checkpointId);
+    OAIIterationState state = checkPointStates.remove(checkpointId);
+    if (state != null) {
+      session.execute(
+          updateStateStatement.bind(state.getCompletedCount(), state.getLastIdentifier(), state.getDatasetId(),
+              state.getExecutionId().toString())
+      );
+    }
+  }
+
+
+  private OAIIterationState readStateOfPreviousTaskExecutionFromDB() {
+    ResultSet result = session.execute(
+        readStateStatement.bind(taskParams.getDatasetId(), taskParams.getExecutionId().toString()));
+    Row row = result.one();
+    if (row != null) {
+      return OAIIterationState.builder()
+                              .datasetId(row.getString(0))
+                              .executionId(UUID.fromString(row.getString(1)))
+                              .completedCount(row.getInt(2))
+                              .lastIdentifier(row.getString(3))
+                              .build();
+    } else {
+      return null;
+    }
+  }
+
+  private void prepareStatements() {
+    readStateStatement = session.prepare("select * from oai_iteration_state where dataset_id=? and execution_id=?");
+    readStateStatement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+    updateStateStatement = session.prepare(
+        "update oai_iteration_state set emitted_count=?, last_identifier=? where dataset_id=? and execution_id=?");
+    updateStateStatement.setConsistencyLevel(ConsistencyLevel.QUORUM);
   }
 }

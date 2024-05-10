@@ -14,7 +14,7 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, OAIE
   private static final Logger LOGGER = LoggerFactory.getLogger(OAIHeadersSplitEnumerator.class);
   private final SplitEnumeratorContext<OAISplit> context;
   private final OAIEnumeratorState state;
-  private boolean finished;
+
 
   public OAIHeadersSplitEnumerator(SplitEnumeratorContext<OAISplit> context, OAIEnumeratorState state) {
     this.context = context;
@@ -30,18 +30,19 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, OAIE
   @Override
   public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
     LOGGER.info("Handling split request, subtaskId: {}, host: {}", subtaskId, requesterHostname);
-    if (!finished) {
+    if (!state.isSplitAssigned()) {
       context.assignSplit(new OAISplit(), subtaskId);
+      state.setSplitAssigned(true);
       LOGGER.info("Assigned split for subtaskId: {}, host: {}", subtaskId, requesterHostname);
     } else {
       LOGGER.info("There are no more splits to assign, for subtaskId: {}, host: {}", subtaskId, requesterHostname);
     }
-    finished = true;
+
   }
 
   @Override
   public void addSplitsBack(List<OAISplit> splits, int subtaskId) {
-    finished = false;
+    state.setSplitAssigned(false);
   }
 
   @Override
@@ -55,7 +56,7 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, OAIE
   }
 
   public void handleSourceEvent(int subtaskId, SourceEvent sourceEvent) {
-    LOGGER.error("SourceEventHere. SubtaskId: {}, event: {}", subtaskId, sourceEvent);
+    LOGGER.info("SourceEventHere. SubtaskId: {}, event: {}", subtaskId, sourceEvent);
   }
 
   @Override
