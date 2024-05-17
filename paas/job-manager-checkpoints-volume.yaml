@@ -1,10 +1,15 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-provisioner: cephfs.manila-cephfs.csi.openstack.org
+    volume.kubernetes.io/storage-provisioner: cephfs.manila-cephfs.csi.openstack.org
   name: job-manager-checkpoints
 spec:
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: 20Gi
+      storage: 50Gi
+  storageClassName: manila-share
+  volumeMode: Filesystem

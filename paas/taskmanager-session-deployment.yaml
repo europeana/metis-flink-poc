@@ -34,6 +34,8 @@ spec:
               mountPath: /opt/flink/log
             - name: dumps
               mountPath: /dumps
+            - name: checkpoints
+              mountPath: /data/flink/checkpoints
           resources:
             limits:
               cpu: "2"
@@ -53,6 +55,9 @@ spec:
                 path: log4j-console.properties
         - emptyDir: { }
           name: log-volume
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: job-manager-checkpoints
         - emptyDir: { }
           name: conf-volume
         - name: dumps
