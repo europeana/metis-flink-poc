@@ -52,7 +52,7 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
                         .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
                         .build();
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      LOGGER.warn(e.getMessage(), e);
       return RecordTuple.builder()
                         .recordId(tuple.getRecordId())
                         .fileContent(tuple.getFileContent())
