@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ValidationJob External" type="Application" factoryName="Application" folderName="executions">
+    <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
+    <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.validation.ValidationJob" />
+    <module name="flinkPoC" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/validation_job.properties --schemaName http://ftp.eanadev.org/schema_zips/europeana_schemas-20231130.zip --rootLocation EDM.xsd --schematronLocation schematron/schematron.xsl --datasetId 5 --previousStepId a1a9e890-00cc-11ef-9f22-dfd56aec5a89" />
+    <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="eu.europeana.cloud.flink.validation.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

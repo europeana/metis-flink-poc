@@ -11,8 +11,6 @@ import eu.europeana.enrichment.rest.client.EnrichmentWorker;
 import eu.europeana.enrichment.rest.client.EnrichmentWorkerImpl;
 import eu.europeana.enrichment.rest.client.dereference.DereferencerProvider;
 import eu.europeana.enrichment.rest.client.enrichment.EnricherProvider;
-import eu.europeana.enrichment.rest.client.exceptions.DereferenceException;
-import eu.europeana.enrichment.rest.client.exceptions.EnrichmentException;
 import eu.europeana.enrichment.rest.client.report.ProcessedResult;
 import eu.europeana.enrichment.rest.client.report.ProcessedResult.RecordStatus;
 import java.nio.charset.StandardCharsets;
@@ -41,30 +39,44 @@ public class EnrichmentOperator extends FollowingJobMainOperator {
   }
 
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
-    ProcessedResult<String> enrichmentResult =
-        enrichmentWorker.process(new String(tuple.getFileContent(), StandardCharsets.UTF_8));
-    if (enrichmentResult.getRecordStatus() != RecordStatus.CONTINUE) {
-      String reportString = enrichmentResult.getReport().stream().map(Object::toString).collect(Collectors.joining("\n"));
-      throw new RuntimeException("Enrichment ended with error!:\n" + reportString);
+  public RecordTuple map(RecordTuple tuple) {
+    try {
+      ProcessedResult<String> enrichmentResult =
+          enrichmentWorker.process(new String(tuple.getFileContent(), StandardCharsets.UTF_8));
+      if (enrichmentResult.getRecordStatus() != RecordStatus.CONTINUE) {
+        String reportString = enrichmentResult.getReport().stream().map(Object::toString).collect(Collectors.joining("\n"));
+        throw new RuntimeException("Enrichment ended with error!:\n" + reportString);
+      }
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
+                        .build();
+    } catch (Exception e) {
+      LOGGER.warn(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
     }
-    return RecordTuple.builder()
-                      .recordId(tuple.getRecordId())
-                      .fileContent(enrichmentResult.getProcessedRecord().getBytes(StandardCharsets.UTF_8))
-                      .build();
   }
 
 
-  public void open(Configuration parameters) throws DereferenceException, EnrichmentException {
-    final EnricherProvider enricherProvider = new EnricherProvider();
-    enricherProvider.setEnrichmentPropertiesValues(enrichmentEntityManagementUrl, enrichmentEntityApiUrl, enrichmentEntityApiKey);
-    final DereferencerProvider dereferencerProvider = new DereferencerProvider();
-    dereferencerProvider.setDereferenceUrl(dereferenceURL);
-    dereferencerProvider.setEnrichmentPropertiesValues(enrichmentEntityManagementUrl, enrichmentEntityApiUrl,
-        enrichmentEntityApiKey);
+  public void open(Configuration parameters) {
+    try {
+      final EnricherProvider enricherProvider = new EnricherProvider();
+      enricherProvider.setEnrichmentPropertiesValues(enrichmentEntityManagementUrl, enrichmentEntityApiUrl,
+          enrichmentEntityApiKey);
+      final DereferencerProvider dereferencerProvider = new DereferencerProvider();
+      dereferencerProvider.setDereferenceUrl(dereferenceURL);
+      dereferencerProvider.setEnrichmentPropertiesValues(enrichmentEntityManagementUrl, enrichmentEntityApiUrl,
+          enrichmentEntityApiKey);
 
-    enrichmentWorker = new EnrichmentWorkerImpl(dereferencerProvider.create(), enricherProvider.create());
-    LOGGER.info("Created enrichment operator.");
+      enrichmentWorker = new EnrichmentWorkerImpl(dereferencerProvider.create(), enricherProvider.create());
+      LOGGER.info("Created enrichment operator.");
+    } catch (Exception e) {
+      LOGGER.warn("Enrichment service not available {}", e.getMessage(), e);
+    }
   }
 
 }

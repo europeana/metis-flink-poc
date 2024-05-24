@@ -1,10 +1,21 @@
 package eu.europeana.cloud.flink.common.tuples;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.Value;
 import org.apache.flink.util.ExceptionUtils;
 
-@Value
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+@ToString
+@EqualsAndHashCode
 @Builder
 public class ErrorTuple {
 

@@ -87,6 +87,7 @@ prepare_configuration() {
         echo "${FLINK_PROPERTIES}" >> "${CONF_FILE}"
     fi
     envsubst < "${CONF_FILE}" > "${CONF_FILE}.tmp" && mv "${CONF_FILE}.tmp" "${CONF_FILE}"
+    chown flink:flink ${CONF_FILE}
 }
 
 maybe_enable_jemalloc() {

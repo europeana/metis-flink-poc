@@ -10,7 +10,6 @@ import eu.europeana.metis.transformation.service.XsltTransformer;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,16 +25,25 @@ public class XsltOperator extends FollowingJobMainOperator {
   @SuppressWarnings("resource") //Ignoring AutoClosable interface of XsltTransformer, cause close method
   // closes static resource, so looks to be improper. The same is in the XsltBolt in the eCloud code.
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
-    final XsltTransformer xsltTransformer = prepareXsltTransformer();
+  public RecordTuple map(RecordTuple tuple) {
+    try {
+      final XsltTransformer xsltTransformer = prepareXsltTransformer();
 
-    StringWriter writer =
-        xsltTransformer.transform(tuple.getFileContent(), prepareEuropeanaGeneratedIdsMap(tuple));
+      StringWriter writer =
+          xsltTransformer.transform(tuple.getFileContent(), prepareEuropeanaGeneratedIdsMap(tuple));
 
-    return RecordTuple.builder()
-                      .recordId(tuple.getRecordId())
-                      .fileContent(writer.toString().getBytes(StandardCharsets.UTF_8))
-                      .build();
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(writer.toString().getBytes(StandardCharsets.UTF_8))
+                        .build();
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
+    }
   }
 
   private XsltTransformer prepareXsltTransformer()

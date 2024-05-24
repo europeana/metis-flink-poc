@@ -44,6 +44,8 @@ spec:
               mountPath: /working-directory
             - name: dumps
               mountPath: /dumps
+            - name: checkpoints
+              mountPath: /data/flink/checkpoints
           resources:
             limits:
               cpu: "2"
@@ -71,6 +73,9 @@ spec:
         - name: working-directory
           persistentVolumeClaim:
             claimName: job-manager-work
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: job-manager-checkpoints
         - name: web-upload
           persistentVolumeClaim:
             claimName: web-upload

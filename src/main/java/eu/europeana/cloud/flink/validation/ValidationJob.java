@@ -1,19 +1,26 @@
 package eu.europeana.cloud.flink.validation;
 
-import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
-import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PREVIOUS_STEP_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.ROOT_LOCATION;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.SCHEMATRON_LOCATION;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.SCHEMA_NAME;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
 import eu.europeana.cloud.flink.common.FollowingJobMainOperator;
+import eu.europeana.cloud.flink.common.JobParameters;
 import java.util.Properties;
 import java.util.UUID;
 import org.apache.flink.api.java.utils.ParameterTool;
 
 public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
 
-  public ValidationJob(Properties properties, ValidationTaskParams taskParams) throws Exception {
-    super(properties, taskParams);
+  public static void main(String[] args) throws Exception {
+    ValidationJob validation = new ValidationJob();
+    validation.executeJob(args);
   }
 
   @Override
@@ -26,8 +33,8 @@ public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
     return new ValidationOperator(taskParams);
   }
 
-  public static void main(String[] args) throws Exception {
-
+  @Override
+  protected JobParameters<ValidationTaskParams> prepareParameters(String[] args) {
     ParameterTool tool = ParameterTool.fromArgs(args);
     String datasetId = tool.getRequired(DATASET_ID);
     ValidationTaskParams taskParams = ValidationTaskParams
@@ -38,10 +45,8 @@ public class ValidationJob extends AbstractFollowingJob<ValidationTaskParams> {
         .schemaName(tool.getRequired(SCHEMA_NAME))
         .rootLocation(tool.getRequired(ROOT_LOCATION))
         .schematronLocation(tool.get(SCHEMATRON_LOCATION))
+        .parallelism(tool.getInt(PARALLELISM, 1))
         .build();
-    ValidationJob job = new ValidationJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
-    job.execute();
+    return new JobParameters<>(tool, taskParams);
   }
-
-
 }

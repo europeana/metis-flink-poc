@@ -5,6 +5,8 @@ import eu.europeana.cloud.flink.common.tuples.RecordTuple;
 import eu.europeana.normalization.Normalizer;
 import eu.europeana.normalization.NormalizerFactory;
 import eu.europeana.normalization.model.NormalizationResult;
+import eu.europeana.normalization.util.NormalizationConfigurationException;
+import eu.europeana.normalization.util.NormalizationException;
 import java.nio.charset.StandardCharsets;
 import org.apache.flink.configuration.Configuration;
 import org.slf4j.Logger;
@@ -16,27 +18,41 @@ public class NormalizationOperator extends FollowingJobMainOperator {
   private transient NormalizerFactory normalizerFactory;
 
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
+  public RecordTuple map(RecordTuple tuple) {
+    try {
+      String outputXml = getNormalizedRecord(tuple);
+      return RecordTuple.builder().recordId(tuple.getRecordId())
+                        .fileContent(outputXml.getBytes(StandardCharsets.UTF_8))
+                        .build();
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
+    }
+  }
+
+  @Override
+  public void open(Configuration parameters) {
+    try {
+      normalizerFactory = new NormalizerFactory();
+      LOGGER.info("Created normalization operator.");
+    } catch (Exception e) {
+      LOGGER.warn("Normalization service not available {}", e.getMessage(), e);
+    }
+  }
+
+  private String getNormalizedRecord(RecordTuple tuple) throws NormalizationConfigurationException, NormalizationException {
     final Normalizer normalizer = normalizerFactory.getNormalizer();
     String document = new String(tuple.getFileContent(), StandardCharsets.UTF_8);
-
     NormalizationResult normalizationResult = normalizer.normalize(document);
     if (normalizationResult.getErrorMessage() != null) {
       throw new RuntimeException(
           "Unable to normalize file: " + tuple.getRecordId() + " - " + normalizationResult.getErrorMessage());
     }
-
-    String outputXml = normalizationResult.getNormalizedRecordInEdmXml();
-    return RecordTuple.builder().recordId(tuple.getRecordId())
-                      .fileContent(outputXml.getBytes(StandardCharsets.UTF_8))
-                      .build();
-  }
-
-
-  @Override
-  public void open(Configuration parameters) {
-    normalizerFactory = new NormalizerFactory();
-    LOGGER.info("Created normalization operator.");
+    return normalizationResult.getNormalizedRecordInEdmXml();
   }
 
 }

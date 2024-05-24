@@ -4,8 +4,8 @@ import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STR
 
 import eu.europeana.cloud.flink.common.tuples.ErrorTuple;
 import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
-import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.cloud.flink.common.tuples.RecordTuple;
+import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.transformation.service.EuropeanaGeneratedIdsMap;
 import eu.europeana.metis.transformation.service.EuropeanaIdCreator;
 import eu.europeana.metis.transformation.service.EuropeanaIdException;
@@ -40,19 +40,27 @@ public class IdAssigningOperator extends ProcessFunction<HarvestedRecordTuple, R
     }
   }
 
-  private RecordTuple assigneEuropeanaIdentifier(HarvestedRecordTuple tuple) throws Exception {
+  private RecordTuple assigneEuropeanaIdentifier(HarvestedRecordTuple tuple) {
     // //Uncomment for error handling tests
     //    if (tuple.getExternalId().equals("ecloud_e2e_tests_NLS____NLS2__RS_643______06VMZI9_sr")) {
     //      throw new XMLParseException("Bad XML!");
     //    }
-
-    EuropeanaGeneratedIdsMap europeanaIdentifier = getEuropeanaIdentifier(tuple);
-    String europeanaId = europeanaIdentifier.getEuropeanaGeneratedId();
-    LOGGER.debug("Assigned Europeana id: {}, for external record: {}", europeanaId, tuple.getExternalId());
-    return RecordTuple.builder()
-                      .recordId(europeanaId)
-                      .fileContent(tuple.getFileContent())
-                      .build();
+    try {
+      EuropeanaGeneratedIdsMap europeanaIdentifier = getEuropeanaIdentifier(tuple);
+      String europeanaId = europeanaIdentifier.getEuropeanaGeneratedId();
+      LOGGER.debug("Assigned Europeana id: {}, for external record: {}", europeanaId, tuple.getExternalId());
+      return RecordTuple.builder()
+                        .recordId(europeanaId)
+                        .fileContent(tuple.getFileContent())
+                        .build();
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId("/externalIdentifier/" + tuple.getExternalId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
+    }
   }
 
   private EuropeanaGeneratedIdsMap getEuropeanaIdentifier(HarvestedRecordTuple tuple)

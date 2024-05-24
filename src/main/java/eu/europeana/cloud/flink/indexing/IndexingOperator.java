@@ -10,7 +10,6 @@ import eu.europeana.indexing.IndexingProperties;
 import eu.europeana.indexing.IndexingSettings;
 import eu.europeana.indexing.exception.IndexingException;
 import eu.europeana.indexing.tiers.model.MediaTier;
-import eu.europeana.metis.transformation.service.TransformationException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,14 +30,42 @@ public class IndexingOperator extends FollowingJobMainOperator {
   }
 
   @Override
-  public RecordTuple map(RecordTuple tuple) throws Exception {
-    boolean recordNotSuitableForPublication = !indexRecord(tuple);
-    if (recordNotSuitableForPublication) {
-      removeIndexedRecord(tuple);
-      throw new RuntimeException("Record deleted from database " + taskParams.getDatabase()
-          + ", cause it was in media tier 0! Id: " + tuple.getRecordId());
+  public RecordTuple map(RecordTuple tuple) {
+    try {
+      boolean recordNotSuitableForPublication = !indexRecord(tuple);
+      if (recordNotSuitableForPublication) {
+        removeIndexedRecord(tuple);
+        throw new RuntimeException("Record deleted from database " + taskParams.getDatabase()
+            + ", cause it was in media tier 0! Id: " + tuple.getRecordId());
+      }
+      return tuple;
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
     }
-    return tuple;
+  }
+
+  @Override
+  public void open(Configuration parameters) {
+    try {
+      executionIndexingProperties = new IndexingProperties(taskParams.getRecordDate(), taskParams.isPreserveTimestamps(),
+          taskParams.getDatasetIdsForRedirection(), taskParams.isPerformRedirects(), true);
+      IndexerFactory indexerFactory = new IndexerFactory(prepareIndexingSettings());
+      indexer = indexerFactory.getIndexer();
+      LOGGER.info("Created indexing operator.");
+    } catch (Exception e) {
+      LOGGER.warn("Indexing service not available {}", e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void close() throws Exception {
+    indexer.close();
+    LOGGER.info("Closed indexing operator.");
   }
 
   private boolean indexRecord(RecordTuple tuple) throws IndexingException {
@@ -59,25 +86,10 @@ public class IndexingOperator extends FollowingJobMainOperator {
     indexer.remove(europeanaId);
   }
 
-  @Override
-  public void open(Configuration parameters) throws TransformationException, IndexingException, URISyntaxException {
-    executionIndexingProperties = new IndexingProperties(taskParams.getRecordDate(), taskParams.isPreserveTimestamps(),
-        taskParams.getDatasetIdsForRedirection(), taskParams.isPerformRedirects(), true);
-    IndexerFactory indexerFactory = new IndexerFactory(prepareIndexingSettings());
-    indexer = indexerFactory.getIndexer();
-    LOGGER.info("Created indexing operator.");
-  }
-
   private IndexingSettings prepareIndexingSettings() throws IndexingException, URISyntaxException {
     IndexingSettingsGenerator settingsGenerator = new IndexingSettingsGenerator(taskParams.getIndexingProperties());
     return taskParams.getDatabase() == TargetIndexingDatabase.PREVIEW
         ? settingsGenerator.generateForPreview()
         : settingsGenerator.generateForPublish();
-  }
-
-  @Override
-  public void close() throws Exception {
-    indexer.close();
-    LOGGER.info("Closed indexing operator.");
   }
 }

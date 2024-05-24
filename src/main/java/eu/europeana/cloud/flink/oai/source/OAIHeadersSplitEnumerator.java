@@ -8,14 +8,16 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, Void> {
+public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, OAIEnumeratorState> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OAIHeadersSplitEnumerator.class);
   private final SplitEnumeratorContext<OAISplit> context;
+  private final OAIEnumeratorState state;
   private boolean finished;
 
-  public OAIHeadersSplitEnumerator(SplitEnumeratorContext<OAISplit> context) {
+  public OAIHeadersSplitEnumerator(SplitEnumeratorContext<OAISplit> context, OAIEnumeratorState state) {
     this.context = context;
+    this.state = state == null ? new OAIEnumeratorState() : state;
   }
 
   @Override
@@ -26,12 +28,12 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, Void
 
   @Override
   public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
-    LOGGER.info("Handling split request, subtaskId: {}, host: {}");
+    LOGGER.info("Handling split request, subtaskId: {}, host: {}", subtaskId, requesterHostname);
     if (!finished) {
       context.assignSplit(new OAISplit(), subtaskId);
-      LOGGER.info("Assigned split for subtaskId: {}, host: {}");
-    }else{
-      LOGGER.info("There are no more splits to assign, for subtaskId: {}, host: {}");
+      LOGGER.info("Assigned split for subtaskId: {}, host: {}", subtaskId, requesterHostname);
+    } else {
+      LOGGER.info("There are no more splits to assign, for subtaskId: {}, host: {}", subtaskId, requesterHostname);
     }
     finished = true;
   }
@@ -47,9 +49,8 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, Void
   }
 
   @Override
-  public Void snapshotState(long checkpointId) throws Exception {
-    //No needed for now
-    return null;
+  public OAIEnumeratorState snapshotState(long checkpointId) throws Exception {
+    return state;
   }
 
   @Override

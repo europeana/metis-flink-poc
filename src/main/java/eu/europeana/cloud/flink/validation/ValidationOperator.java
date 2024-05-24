@@ -27,13 +27,44 @@ public class ValidationOperator extends FollowingJobMainOperator {
     this.taskParams = taskParams;
   }
 
-
   @Override
   public RecordTuple map(RecordTuple tuple) throws Exception {
-    validate(getSortedFileContent(tuple.getFileContent()));
-    return tuple;
+    try {
+      validate(getSortedFileContent(tuple.getFileContent()));
+      return tuple;
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      return RecordTuple.builder()
+                        .recordId(tuple.getRecordId())
+                        .fileContent(tuple.getFileContent())
+                        .errorMessage(e.getMessage())
+                        .build();
+    }
   }
 
+  @Override
+  public void open(Configuration parameters) {
+    try {
+      Properties validationProperties = new Properties();
+      PropertyFileLoader.loadPropertyFile(VALIDATION_PROPERTIES_FILE, "", validationProperties);
+      validationService = new ValidationExecutionService(validationProperties);
+      final String sorterFileLocation = validationProperties.get(ValidationTopologyPropertiesKeys.EDM_SORTER_FILE_LOCATION)
+                                                            .toString();
+      LOGGER.info("Preparing XsltTransformer for {}", sorterFileLocation);
+      transformer = new XsltTransformer(sorterFileLocation);
+      LOGGER.info("Created validation operator.");
+    } catch (Exception e) {
+      LOGGER.warn("Validation service not available {}", e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void close() throws Exception {
+    validationService.cleanup();
+    //We do not close XsltTransformer, cause its close method closes static resource, so looks to be improper.
+    // The same is in the XsltBolt in the eCloud code.
+    // transformer.close();
+  }
 
   private void validate(byte[] sortedContent) {
     String document = new String(sortedContent, StandardCharsets.UTF_8);
@@ -49,24 +80,6 @@ public class ValidationOperator extends FollowingJobMainOperator {
   private byte[] getSortedFileContent(byte[] fileContent) throws TransformationException {
     StringWriter writer = transformer.transform(fileContent, null);
     return writer.toString().getBytes(StandardCharsets.UTF_8);
-  }
-
-   public void open(Configuration parameters) throws TransformationException {
-    Properties validationProperties = new Properties();
-    PropertyFileLoader.loadPropertyFile(VALIDATION_PROPERTIES_FILE, "", validationProperties);
-    validationService = new ValidationExecutionService(validationProperties);
-    final String sorterFileLocation = validationProperties.get(ValidationTopologyPropertiesKeys.EDM_SORTER_FILE_LOCATION).toString();
-    LOGGER.info("Preparing XsltTransformer for {}", sorterFileLocation);
-    transformer = new XsltTransformer(sorterFileLocation);
-    LOGGER.info("Created validation operator.");
-  }
-
-  @Override
-  public void close() throws Exception {
-    validationService.cleanup();
-    //We do not close XsltTransformer, cause its close method closes static resource, so looks to be improper.
-    // The same is in the XsltBolt in the eCloud code.
-    // transformer.close();
   }
 
 }

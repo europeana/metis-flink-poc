@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  cassandra:
+    image: cassandra:3.11.16
+    container_name: flink-cassandra
+    restart: always
+    ports:
+      - 9042:9042
+      - 9160:9160
+    volumes:
+      - /data/cassandra:/var/lib/cassandra
+
+  zookeeper:
+    image: zookeeper:3.9.2
+    container_name: flink-zookeeper
+    restart: always
+    ports:
+      - 2181:2181
+
+  solr:
+    image: solr:7.7.3
+    container_name: flink-solr
+    restart: always
+    ports:
+      - 8983:8983
+    volumes:
+      - /data/solr:/var/solr
+
+  flink-jobmanager:
+    image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest
+    container_name: flink-rich-poc-jm
+    command: jobmanager
+    environment:
+       FLINK_PROPERTIES: |+ 
+          jobmanager.rpc.address: flink-jobmanager 
+          taskmanager.numberOfTaskSlots: 4 
+          blob.server.port: 6124 
+          jobmanager.rpc.port: 6123 
+          taskmanager.rpc.port: 6122 
+          jobmanager.memory.process.size: 2728m 
+          taskmanager.memory.process.size: 2728m 
+          taskmanager.memory.jvm-metaspace.size: 512MB 
+          jobmanager.memory.jvm-metaspace.size: 512MB 
+          parallelism.default: 2 
+          env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps --add-opens java.base/jdk.internal.misc=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true" 
+          web.upload.dir: /web-upload 
+          jobstore.expiration-time: 172800 
+          jobstore.type: File 
+          process.jobmanager.working-dir: /working-directory 
+          state.backend.type: filesystem 
+          state.checkpoints.dir: file:///data/flink/checkpoints                        
+          execution.checkpointing.interval: 30000
+          execution.checkpointing.min-pause: 30000
+          execution.checkpointing.tolerable-failed-checkpoints: 5
+          execution.checkpointing.mode: AT_LEAST_ONCE
+          jobmanager.resource-id: poc1
+    volumes:
+      - /data/flink/deployments:/deployments:rw
+      - /data/flink/jobs-config:/jobs-config
+      - /data/flink/working-directory:/working-directory:rw
+      - /data/flink/web-upload:/web-upload:rw
+      - /data/flink/log:/opt/flink/log:rw
+      - flink-checkpoints:/data/flink/checkpoints
+    ports:
+      - '6123:6123'
+      - '6124:6124'
+      - '8081:8081'
+    networks:
+      - flink-network
+  flink-taskmanager:
+    image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc
+    container_name: flink-rich-poc-tm
+    user: 1000:1000
+    command: taskmanager
+    environment:
+      FLINK_PROPERTIES: |+
+        jobmanager.rpc.address: jobmanager 
+        taskmanager.numberOfTaskSlots: 4 
+        blob.server.port: 6124 
+        jobmanager.rpc.port: 6123 
+        taskmanager.rpc.port: 6122 
+        jobmanager.memory.process.size: 2728m 
+        taskmanager.memory.process.size: 2728m 
+        taskmanager.memory.jvm-metaspace.size: 512MB 
+        jobmanager.memory.jvm-metaspace.size: 512MB 
+        parallelism.default: 2 
+        env.java.opts.all: "-XX:MaxDirectMemorySize=1170210816 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Djava.rmi.server.hostname=127.0.0.1 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dumps" 
+        web.upload.dir: /web-upload 
+        jobstore.expiration-time: 172800 
+        jobstore.type: File 
+        process.jobmanager.working-dir: /working-directory 
+        state.backend.type: filesystem 
+        state.checkpoints.dir: file:///data/flink/checkpoints                        
+        execution.checkpointing.interval: 30000
+        execution.checkpointing.min-pause: 30000
+        execution.checkpointing.tolerable-failed-checkpoints: 5
+        execution.checkpointing.mode: AT_LEAST_ONCE
+        jobmanager.resource-id: poc1
+    ports:
+      - '6122:6122'
+    volumes:
+      - /data/flink/log:/opt/flink/log:rw
+    networks:
+      - flink-network
+    depends_on:
+      - flink-jobmanager
+networks:
+  flink-network:
+
+volumes:
+  flink-checkpoints:
+    name: flink-checkpoints
+    driver: local
+  flink-log:
+    name: flink-log
+    driver: local

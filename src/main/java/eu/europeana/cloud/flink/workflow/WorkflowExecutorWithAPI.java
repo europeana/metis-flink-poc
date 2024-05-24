@@ -4,6 +4,7 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.CONFIGURAT
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.METADATA_PREFIX;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
@@ -17,9 +18,9 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WorkflowExecutor {
+public class WorkflowExecutorWithAPI {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowExecutor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowExecutorWithAPI.class);
 
   private final String datasetId;
   private final OaiHarvest oaiHarvest;
@@ -27,8 +28,7 @@ public class WorkflowExecutor {
   private JobExecutor jobExecutor;
   private int parallelism;
 
-
-  public WorkflowExecutor(Properties serverConfiguration, String datasetId, OaiHarvest oaiHarvest, int parallelism) {
+  public WorkflowExecutorWithAPI(Properties serverConfiguration, String datasetId, OaiHarvest oaiHarvest, int parallelism) {
     this.jobExecutor = new JobExecutor(serverConfiguration);
     this.datasetId = datasetId;
     this.oaiHarvest = oaiHarvest;
@@ -43,8 +43,8 @@ public class WorkflowExecutor {
         tool.getRequired(SET_SPEC));
     String datasetId = tool.getRequired(DATASET_ID);
     Properties serverConfiguration = readProperties(tool.getRequired(CONFIGURATION_FILE_PATH));
-    int parallelism = tool.getInt("parallelism", 1);
-    new WorkflowExecutor(serverConfiguration, datasetId, oaiHarvest, parallelism).execute();
+    int parallelism = tool.getInt(PARALLELISM, 1);
+    new WorkflowExecutorWithAPI(serverConfiguration, datasetId, oaiHarvest, parallelism).execute();
   }
 
   private void execute() {

@@ -2,25 +2,31 @@ package eu.europeana.cloud.flink.oai;
 
 import static eu.europeana.cloud.flink.common.AbstractFollowingJob.createJobName;
 import static eu.europeana.cloud.flink.common.FollowingJobMainOperator.ERROR_STREAM_TAG;
-import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
-import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.METADATA_PREFIX;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
+import eu.europeana.cloud.flink.common.GenericJob;
+import eu.europeana.cloud.flink.common.JobParameters;
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.common.tuples.HarvestedRecordTuple;
 import eu.europeana.cloud.flink.common.tuples.RecordTuple;
 import eu.europeana.cloud.flink.oai.harvest.DeletedRecordFilter;
+import eu.europeana.cloud.flink.oai.harvest.IdAssigningOperator;
 import eu.europeana.cloud.flink.oai.harvest.RecordHarvestingOperator;
+import eu.europeana.cloud.flink.oai.source.OAIHeadersSource;
 import eu.europeana.cloud.flink.simpledb.DbEntityCreatingOperator;
 import eu.europeana.cloud.flink.simpledb.DbErrorEntityCreatingOperator;
 import eu.europeana.cloud.flink.simpledb.RecordExecutionEntity;
-import eu.europeana.cloud.flink.oai.harvest.IdAssigningOperator;
-import eu.europeana.cloud.flink.oai.source.OAIHeadersSource;
 import eu.europeana.cloud.flink.simpledb.RecordExecutionExceptionLogEntity;
 import eu.europeana.cloud.service.dps.storm.topologies.properties.TopologyPropertyKeys;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import java.util.Properties;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -30,13 +36,47 @@ import org.apache.flink.streaming.connectors.cassandra.CassandraSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OAIJob {
+public class OAIJob extends GenericJob<OAITaskParams> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OAIJob.class);
-  protected final StreamExecutionEnvironment flinkEnvironment;
-  private final String jobName;
+  protected StreamExecutionEnvironment flinkEnvironment;
+  private String jobName;
 
-  public OAIJob(Properties properties, OAITaskParams taskParams) throws Exception {
+  public static void main(String[] args) throws Exception {
+    OAIJob oaiHarvest = new OAIJob();
+    oaiHarvest.executeJob(args);
+  }
+
+  @Override
+  public JobParameters<OAITaskParams> prepareParameters(String[] args) {
+    ParameterTool tool = ParameterTool.fromArgs(args);
+    OaiHarvest oaiHarvest = new OaiHarvest(
+        tool.getRequired(OAI_REPOSITORY_URL),
+        tool.getRequired(METADATA_PREFIX),
+        tool.getRequired(SET_SPEC));
+    String datasetId = tool.getRequired(DATASET_ID);
+    OAITaskParams taskParams = OAITaskParams.builder()
+                                            .oaiHarvest(oaiHarvest)
+                                            .datasetId(datasetId)
+                                            .metisDatasetId(datasetId)
+                                            .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
+                                            .build();
+    return new JobParameters<>(tool, taskParams);
+  }
+
+  @Override
+  public JobExecutionResult execute() throws Exception {
+    return flinkEnvironment.execute(jobName);
+  }
+
+  private String createSourceName(OAITaskParams taskParams) {
+    return "OAI (url: " + taskParams.getOaiHarvest().getRepositoryUrl()
+        + ", set: " + taskParams.getOaiHarvest().getSetSpec() +
+        ", format: " + taskParams.getOaiHarvest().getMetadataPrefix() + ")";
+  }
+
+  @Override
+  protected void setupJob(Properties properties, OAITaskParams taskParams) throws Exception {
     LOGGER.info("Creating {} for execution: {}, with execution parameters: {}",
         getClass().getSimpleName(), taskParams.getExecutionId(), taskParams);
 
@@ -67,34 +107,6 @@ public class OAIJob {
                               .map(new DbErrorEntityCreatingOperator(jobType, taskParams)).name("Create exception DB entity");
 
     CassandraSink.addSink(errorStream).setClusterBuilder(cassandraClusterBuilder).build();
-  }
-
-  private String createSourceName(OAITaskParams taskParams) {
-    return "OAI (url: " + taskParams.getOaiHarvest().getRepositoryUrl()
-        + ", set: " + taskParams.getOaiHarvest().getSetSpec() +
-        ", format: " + taskParams.getOaiHarvest().getMetadataPrefix() + ")";
-  }
-
-  public static void main(String[] args) throws Exception {
-    ParameterTool tool = ParameterTool.fromArgs(args);
-    OaiHarvest oaiHarvest = new OaiHarvest(
-        tool.getRequired(OAI_REPOSITORY_URL),
-        tool.getRequired(METADATA_PREFIX),
-        tool.getRequired(SET_SPEC));
-    String datasetId = tool.getRequired(DATASET_ID);
-    OAITaskParams taskParams =
-        OAITaskParams.builder()
-                     .oaiHarvest(oaiHarvest)
-                     .datasetId(datasetId)
-                     .metisDatasetId(datasetId)
-                     .executionId(useNewIfNull(tool.get(EXECUTION_ID)))
-                     .build();
-    OAIJob job = new OAIJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
-    job.execute();
-  }
-
-  private void execute() throws Exception {
-    flinkEnvironment.execute(jobName);
   }
 
 }

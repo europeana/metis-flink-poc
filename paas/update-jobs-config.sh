@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-echo Deploing Flink on the openshift cluster. $(oc project)
+echo Deploying Flink on the openshift cluster. $(oc project)
 #checikng if project is valid
 echo Checking project...
 oc project | grep ecloud-flink-poc

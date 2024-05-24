@@ -1,13 +1,23 @@
 package eu.europeana.cloud.flink.indexing;
 
-import static eu.europeana.cloud.flink.common.JobsParametersConstants.*;
-import static eu.europeana.cloud.flink.common.utils.JobUtils.*;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_IDS_TO_REDIRECT_FROM;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.INDEXING_PROPERTIES_FILE_PATH;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PERFORM_REDIRECTS;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PRESERVE_TIMESTAMPS;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PREVIOUS_STEP_ID;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.RECORD_DATE;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.TARGET_INDEXING_DATABASE;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
+import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
-
+import eu.europeana.cloud.flink.common.JobParameters;
 import eu.europeana.cloud.service.commons.utils.DateHelper;
 import eu.europeana.cloud.service.dps.metis.indexing.TargetIndexingDatabase;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -18,8 +28,9 @@ import org.apache.flink.api.java.utils.ParameterTool;
 
 public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
 
-  public IndexingJob(Properties properties, IndexingTaskParams taskParams) throws Exception {
-    super(properties, taskParams);
+  public static void main(String[] args) throws Exception {
+    IndexingJob indexing = new IndexingJob();
+    indexing.executeJob(args);
   }
 
   protected String mainOperatorName() {
@@ -31,8 +42,8 @@ public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
     return new IndexingOperator(taskParams);
   }
 
-  public static void main(String[] args) throws Exception {
-
+  @Override
+  protected JobParameters<IndexingTaskParams> prepareParameters(String[] args) throws IOException {
     ParameterTool tool = ParameterTool.fromArgs(args);
     String metisDatasetId = tool.getRequired(DATASET_ID);
 
@@ -52,9 +63,8 @@ public class IndexingJob extends AbstractFollowingJob<IndexingTaskParams> {
                                                               .toList())
                                           .orElse(Collections.emptyList()))
         .indexingProperties(readProperties(tool.getRequired(INDEXING_PROPERTIES_FILE_PATH)))
+        .parallelism(tool.getInt(PARALLELISM, 1))
         .build();
-    IndexingJob job = new IndexingJob(readProperties(tool.getRequired(CONFIGURATION_FILE_PATH)), taskParams);
-    job.execute();
+    return new JobParameters<>(tool, taskParams);
   }
-
 }
