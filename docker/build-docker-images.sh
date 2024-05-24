@@ -13,5 +13,5 @@ docker build --no-cache -t flink-node-poc .
 cd ..
 cd ..
 echo building :: flink-rich-node $(pwd)
-docker build --no-cache -t flink-rich-node-poc -f ./docker/Dockerfile .
+docker build --no-cache -t flink-rich-node-poc -f ./docker/flink-node-with-application/Dockerfile .
 
