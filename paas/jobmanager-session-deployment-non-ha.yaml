@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: jobmanager
-          image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest-k
+          image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest
           imagePullPolicy: Always
           args: ["jobmanager"]
           ports:

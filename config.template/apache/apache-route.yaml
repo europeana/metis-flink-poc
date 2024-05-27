@@ -2,12 +2,12 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   annotations:
-    haproxy.router.openshift.io/ip_whitelist: 150.254.169.100/32 150.254.169.54/32 150.254.169.102/32 158.177.7.254/32 178.62.250.193/32 150.254.155.236 83.83.57.165/32 195.216.97.50
+    haproxy.router.openshift.io/ip_whitelist: <ip_of_client_1> <ip_of_client_2>
   labels:
     app: apache-dashboard
   name: apache-dashboard
 spec:
-  host: flink-dashboard-k.apps.dcw1.paas.psnc.pl
+  host: flink-dashboard.apps.dcw1.paas.psnc.pl
   port:
     targetPort: 8080-tcp
   tls:

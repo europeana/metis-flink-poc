@@ -15,5 +15,5 @@ oc create configmap apache-mod-security --from-file=mod_security.conf
 
 oc apply -f apache.yaml
 oc apply -f apache-service.yaml
-oc apply -f apache-route.yaml
+oc apply -f ../../config/apache/apache-route.yaml
 echo Deploy completed - OK
