@@ -166,6 +166,18 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   }
 
   @Override
+  public void notifyCheckpointComplete(long checkpointId) throws Exception {
+    LOGGER.info("notifyCheckpointComplete: {}", checkpointId);
+    OAIIterationState state = checkPointStates.remove(checkpointId);
+    if (state != null) {
+      session.execute(
+          updateStateStatement.bind(state.getCompletedCount(), state.getLastIdentifier(), state.getDatasetId(),
+              state.getExecutionId().toString())
+      );
+    }
+  }
+
+  @Override
   public CompletableFuture<Void> isAvailable() {
     return available;
   }
@@ -191,17 +203,6 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
     LOGGER.info("Closed reader!");
   }
 
-  @Override
-  public void notifyCheckpointComplete(long checkpointId) throws Exception {
-    LOGGER.info("notifyCheckpointComplete: {}", checkpointId);
-    OAIIterationState state = checkPointStates.remove(checkpointId);
-    if (state != null) {
-      session.execute(
-          updateStateStatement.bind(state.getCompletedCount(), state.getLastIdentifier(), state.getDatasetId(),
-              state.getExecutionId().toString())
-      );
-    }
-  }
 
 
   private OAIIterationState readStateOfPreviousTaskExecutionFromDB() {

@@ -48,13 +48,18 @@ services:
           jobstore.expiration-time: 172800 
           jobstore.type: File 
           process.jobmanager.working-dir: /working-directory 
-          state.backend.type: filesystem 
+          jobmanager.resource-id: poc1
+          state.backend.type: filesystem
           state.checkpoints.dir: file:///data/flink/checkpoints                        
+          execution.runtime-mode: STREAMING
           execution.checkpointing.interval: 30000
           execution.checkpointing.min-pause: 30000
           execution.checkpointing.tolerable-failed-checkpoints: 5
           execution.checkpointing.mode: AT_LEAST_ONCE
-          jobmanager.resource-id: poc1
+          taskmanager.network.memory.buffer-debloat.enabled: true
+          jobmanager.scheduler: adaptive
+          slot.idle.timeout: 5000
+          slot.request.timeout: 20000
     volumes:
       - /data/flink/deployments:/deployments:rw
       - /data/flink/jobs-config:/jobs-config
