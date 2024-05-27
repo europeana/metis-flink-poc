@@ -4,7 +4,8 @@ import eu.europeana.cloud.flink.common.db.DbConnection;
 import eu.europeana.cloud.flink.common.operator.ValidationOperator;
 import eu.europeana.cloud.flink.common.repository.TaskInfoRepository;
 import eu.europeana.cloud.flink.common.source.ProgressingDbSinkFunction;
-import eu.europeana.cloud.flink.common.source.DbSource;
+import eu.europeana.cloud.flink.common.source.DbSourceWithProgressHandling;
+import eu.europeana.cloud.flink.common.source.DbSinkFunction;
 import eu.europeana.cloud.flink.model.TaskInfo;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -17,64 +18,58 @@ import java.util.Random;
 
 /**
  * <p><b>General description:</b></p>
- * <p>This is the simplest possible implementation that I did to get better understanding of
- * the internals of Apache Flink. Here we have single threaded job (parallelism = 1) that doesn't use state,
- * checkpoints and checkpoint barriers.</p>
+ * <p>This is second iteration of validation job that removes last one difference with the Sping based solution.
+ * Now we have multithreaded operator that does the validation. It means that we have the following solution:
  *
- * <p>Additionally this implementation is similar the the Spring Batch implementation done in other PoC.
- * The only one difference is in the {@link ValidationOperator}. Here we have single threaded processing, where,
- * in Spring Batch we have multiple thread. But the other aspect are the same:
  * <ul>
  *      <li>single thread, single instance data reader</li>
+ *      <li>multithreaded validation operator (equivalent of validation processor from Spring PoC)</li>
  *      <li>single thread single instance data writer</li>
  *      <li>chunks are processed one ofter another in the same order as taken from DB</li>
  * </ul>
- * We will try to tackle this one difference in the next implementation {@link ValidationJobWithPostgresMultiThreadedOperation}.
- * </p>
+ *
+ * <p>Such approach makes progress tracking more difficult to implement. To do that I used Flink stream barriers
+ * (special messages that are injected to the stream and flow with the records. Barriers never overtake records)
+ * and blockage of the reader.
+ * The algorithm is the following:
+ *  - after emitting last one records from the chunk (from split) we block the reader;
+ *  - reader keeps the checkpointId of the first checkpoint emitted after be blockage;
+ *  - reader waits for the completion of the given checkpoint;
+ *  - when the checkpoint is completed, reader updates the progress and unblocks the processing;
  *
  *
- * <p>Such approach makes progress tracking much more easier to implement. This is because all the records are processed
- * in the same order as they are read from DB.</p>
- *
- *
- *
- * <p><b>Progress tracking:</b></p>
- * <p>To be able to resume task after crash we have to track the progress. It is implemented here in similar way
- * as it is in Spring Batch jobs. After successful chunk processing, information about it is stored in the database
- * (in {@link ProgressingDbSinkFunction}). During job startup {@link eu.europeana.cloud.flink.common.source.DbEnumerator}
- * reads the status from the DB and resume the job from the first chunk that was not fully processed.
+ * <p>Progress tracking:</p>
+ * In this implementation progress tracking were moved from {@link ProgressingDbSinkFunction} to {@link eu.europeana.cloud.flink.common.source.DbReaderWithProgressHandling}
+ * During job startup {@link eu.europeana.cloud.flink.common.source.DbEnumerator}
+ * will read the status from the DB and resume the job from the first chunk that was not fully processed.
  * In this approach it is possible that some records will be reprocessed, but in the worse case there will be
- * <i><b>Chunk_size</b></i> records that has to be reprocessed.
- *</p>
+ * Chunk_size records that have to be reprocessed.
  *
  *
- * <p><b>Task identifiers:</b></p>
- * <p>
+ * <p>Task identifiers</p>
  * Task identifier maybe provided in the task parameters. In this case job will try to resume the given job.
  * In other case (when task identifier is not provided in the parameters) it will be generated randomly;
- * </p>
- *
- *
- * <p>This source code is not optimal (there are multiple duplications, not static constants, multiple log messages ...).
- * This is because the main aim was to get familiar with Flink itself.</p>
  *
  */
-public class ValidationJobWithPostgresSingleThreaded {
+public class ValidationJobWithPostgresMultiThreadedOperation {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValidationJobWithPostgresSingleThreaded.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValidationJobWithPostgresMultiThreadedOperation.class);
+
+    private static final int DEFAULT_PARALLELISM = 4;
 
     public static void main(String[] args) throws Exception {
 
         LOGGER.info("Starting ValidationJobWithPostgresSingleThreaded...");
         ParameterTool tool = ParameterTool.fromArgs(args);
         tool = generateTaskIdIfNeeded(tool);
+
         final StreamExecutionEnvironment env = prepareEnvironment(tool);
 
         env.fromSource(
-                        new DbSource(tool), WatermarkStrategy.noWatermarks(), "dbSource"
-                )
-                .process(new ValidationOperator())
-                .addSink(new ProgressingDbSinkFunction());
+                        new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), "dbSource"
+                ).setParallelism(1)
+                .process(new ValidationOperator()).setParallelism(tool.getInt("PARALLELISM", DEFAULT_PARALLELISM))
+                .addSink(new DbSinkFunction()).setParallelism(1);
 
         env.execute();
     }
@@ -96,6 +91,7 @@ public class ValidationJobWithPostgresSingleThreaded {
 
         env.setParallelism(1);
         env.getConfig().setGlobalJobParameters(tool);
+        env.enableCheckpointing(5000);
         return env;
     }
 }
