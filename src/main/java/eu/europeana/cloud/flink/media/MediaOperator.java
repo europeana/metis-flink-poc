@@ -62,7 +62,7 @@ public class MediaOperator extends FollowingJobMainOperator {
                         .fileContent(outputRdfBytes)
                         .build();
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      LOGGER.warn(e.getMessage(), e);
       return RecordTuple.builder()
                         .recordId(tuple.getRecordId())
                         .fileContent(tuple.getFileContent())
@@ -79,7 +79,7 @@ public class MediaOperator extends FollowingJobMainOperator {
       final MediaProcessorFactory mediaProcessorFactory = new MediaProcessorFactory();
       mediaExtractor = mediaProcessorFactory.createMediaExtractor();
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      LOGGER.warn("Media service not available {}", e.getMessage(), e);
     }
   }
 

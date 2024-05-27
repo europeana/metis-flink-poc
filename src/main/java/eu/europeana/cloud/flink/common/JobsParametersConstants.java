@@ -7,6 +7,7 @@ public class JobsParametersConstants {
   public static final String EXECUTION_ID = "executionId";
   public static final String PREVIOUS_STEP_ID = "previousStepId";
   public static final String CONFIGURATION_FILE_PATH = "configurationFilePath";
+  public static final String PARALLELISM = "parallelism";
 
   //OAI
   public static final String SET_SPEC = "setSpec";

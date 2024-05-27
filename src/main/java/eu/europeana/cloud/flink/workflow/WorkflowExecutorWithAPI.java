@@ -4,6 +4,7 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.CONFIGURAT
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.DATASET_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.METADATA_PREFIX;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
@@ -42,7 +43,7 @@ public class WorkflowExecutorWithAPI {
         tool.getRequired(SET_SPEC));
     String datasetId = tool.getRequired(DATASET_ID);
     Properties serverConfiguration = readProperties(tool.getRequired(CONFIGURATION_FILE_PATH));
-    int parallelism = tool.getInt("parallelism", 1);
+    int parallelism = tool.getInt(PARALLELISM, 1);
     new WorkflowExecutorWithAPI(serverConfiguration, datasetId, oaiHarvest, parallelism).execute();
   }
 

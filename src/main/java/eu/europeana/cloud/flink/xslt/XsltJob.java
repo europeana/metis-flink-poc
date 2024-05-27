@@ -5,13 +5,13 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.EXECUTION_
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.METIS_DATASET_COUNTRY;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.METIS_DATASET_LANGUAGE;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.METIS_DATASET_NAME;
+import static eu.europeana.cloud.flink.common.JobsParametersConstants.PARALLELISM;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.PREVIOUS_STEP_ID;
 import static eu.europeana.cloud.flink.common.JobsParametersConstants.XSLT_URL;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.useNewIfNull;
 
 import eu.europeana.cloud.flink.common.AbstractFollowingJob;
 import eu.europeana.cloud.flink.common.JobParameters;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.UUID;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -33,7 +33,7 @@ public class XsltJob extends AbstractFollowingJob<XsltParams> {
   }
 
   @Override
-  protected JobParameters<XsltParams> prepareParameters(String[] args) throws IOException {
+  protected JobParameters<XsltParams> prepareParameters(String[] args) {
     ParameterTool tool = ParameterTool.fromArgs(args);
     String metisDatasetId = tool.getRequired(DATASET_ID);
     XsltParams taskParams = XsltParams
@@ -46,6 +46,7 @@ public class XsltJob extends AbstractFollowingJob<XsltParams> {
         .metisDatasetName(tool.get(METIS_DATASET_NAME))
         .metisDatasetCountry(tool.get(METIS_DATASET_COUNTRY))
         .metisDatasetLanguage(tool.get(METIS_DATASET_LANGUAGE))
+        .parallelism(tool.getInt(PARALLELISM, 1))
         .build();
     return new JobParameters<>(tool, taskParams);
   }
