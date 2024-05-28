@@ -16,7 +16,6 @@ import java.util.Properties;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.cassandra.CassandraSink;
@@ -43,10 +42,10 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
 
   protected JobExecutionResult execute() throws Exception {
     JobExecutionResult result;
-      LOGGER.info("Executing the Job...");
-      result = flinkEnvironment.execute(jobName);
-      LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
-          result);
+    LOGGER.info("Executing the Job...");
+    result = flinkEnvironment.execute(jobName);
+    LOGGER.info("Ended the dataset: {} execution: {}\nresult: {}", taskParams.getDatasetId(), taskParams.getExecutionId(),
+        result);
     return result;
   }
 
@@ -60,14 +59,17 @@ public abstract class AbstractFollowingJob<PARAMS_TYPE extends FollowingTaskPara
     flinkEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
     flinkEnvironment.getCheckpointConfig().setCheckpointStorage(new FileSystemCheckpointStorage(PATH_FLINK_JOBS_CHECKPOINTS));
     flinkEnvironment.registerJobListener(new CheckpointCleanupListener());
+
+    flinkEnvironment.setParallelism(taskParams.getParallelism());
+
     DataStream<RecordExecutionEntity> source = createCassandraSource(flinkEnvironment, properties, taskParams)
         //This ensure rebalancing tuples emitted by this source, so they are performed in parallel on next steps
         //TODO The command rebalance does not work for this source for some reasons. To investigate
+        .setParallelism(1)
         .rebalance();
     SingleOutputStreamOperator<RecordTuple> processStream =
         source.map(new DbEntityToTupleConvertingOperator()).name("Prepare DB entity")
               .process(createMainOperator(properties, taskParams)).name(mainOperatorName());
-
     SingleOutputStreamOperator<RecordExecutionEntity> resultStream =
         processStream.map(new DbEntityCreatingOperator(jobType, taskParams)).name("Create DB entity");
 
