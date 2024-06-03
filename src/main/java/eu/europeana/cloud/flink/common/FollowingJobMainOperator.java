@@ -18,9 +18,11 @@ public abstract class FollowingJobMainOperator extends ProcessFunction<RecordTup
   public final void processElement(RecordTuple tuple,
       ProcessFunction<RecordTuple, RecordTuple>.Context context, Collector<RecordTuple> out) {
     try {
+      LOGGER.info("Processing tuple {}", tuple.getRecordId());
       tuple = map(tuple);
-      out.collect(tuple);
-      if (!tuple.getErrorMessage().isBlank()) {
+      if (isTupleErrorFree(tuple)) {
+        out.collect(tuple);
+      } else {
         context.output(ERROR_STREAM_TAG, ErrorTuple.builder()
                                                    .recordId(tuple.getRecordId())
                                                    .exception(new Exception(tuple.getErrorMessage()))
@@ -34,6 +36,10 @@ public abstract class FollowingJobMainOperator extends ProcessFunction<RecordTup
                                                  .exception(e)
                                                  .build());
     }
+  }
+
+  private static boolean isTupleErrorFree(RecordTuple tuple) {
+    return tuple.getErrorMessage().isBlank();
   }
 
   public abstract RecordTuple map(RecordTuple tuple) throws Exception;
