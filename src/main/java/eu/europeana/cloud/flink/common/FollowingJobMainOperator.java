@@ -18,7 +18,6 @@ public abstract class FollowingJobMainOperator extends ProcessFunction<RecordTup
   public final void processElement(RecordTuple tuple,
       ProcessFunction<RecordTuple, RecordTuple>.Context context, Collector<RecordTuple> out) {
     try {
-      LOGGER.info("Processing tuple {}", tuple.getRecordId());
       tuple = map(tuple);
       if (isTupleErrorFree(tuple)) {
         out.collect(tuple);
