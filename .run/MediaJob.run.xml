@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.media.MediaJob" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies/media.cfg --datasetId 1 --previousStepId bd969210-f357-11ee-b02f-9535ac9a3dc9" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/media_job.properties --datasetId 20 --previousStepId 703240f0-21ba-11ef-afd0-6941b67c8761" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>

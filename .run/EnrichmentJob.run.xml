@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.enrichment.EnrichmentJob" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies/enrichment.cfg --datasetId 1 --previousStepId 54c1c9a0-f355-11ee-9f20-191b4803a3e6" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/enrichment_job.properties --datasetId 20 --previousStepId 13de1590-21ba-11ef-afd0-6941b67c8761" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>

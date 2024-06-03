@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="eu.europeana.cloud.flink.validation.ValidationJob" />
     <module name="flinkPoC" />
-    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath $PROJECT_DIR$/../ecloud-configuration/dev/topologies/validation.cfg --datasetId 1 --previousStepId fe064b70-f351-11ee-bdf0-f17ff153b3ba --schemaName http://ftp.eanadev.org/schema_zips/europeana_schemas-20231130.zip --rootLocation EDM-INTERNAL.xsd --schematronLocation schematron/schematron-internal.xsl" />
+    <option name="PROGRAM_PARAMETERS" value="--configurationFilePath /jobs-config/validation_job.properties --datasetId 20 --previousStepId b912a9e0-21b5-11ef-afd0-6941b67c8761 --schemaName http://ftp.eanadev.org/schema_zips/europeana_schemas-20231130.zip --rootLocation EDM-INTERNAL.xsd --schematronLocation schematron/schematron-internal.xsl --paralellism 1" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>
