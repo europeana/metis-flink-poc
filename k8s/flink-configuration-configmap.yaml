@@ -15,15 +15,20 @@ data:
     taskmanager.memory.process.size: 1728m
     parallelism.default: 2
     env.java.opts.all: "--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED"
+    state.checkpoints.dir: file:///data/flink/checkpoints
+    execution.checkpointing.interval: 30000
+    execution.checkpointing.min-pause: 30000
+    execution.checkpointing.tolerable-failed-checkpoints: 5
+    execution.checkpointing.mode: AT_LEAST_ONCE
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO
     rootLogger.appenderRef.console.ref = ConsoleAppender
     rootLogger.appenderRef.rolling.ref = RollingFileAppender
-
-    # Uncomment this if you want to _only_ change Flink's logging
-    #logger.flink.name = org.apache.flink
-    #logger.flink.level = INFO
+    
+    #Custom
+    logger.poc.name = eu.europeana.cloud.flink
+    logger.poc.level = DEBUG
 
     # The following lines keep the log level of common libraries/connectors on
     # log level INFO. The root logger does not override this. You have to manually
