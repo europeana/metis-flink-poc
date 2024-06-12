@@ -51,6 +51,7 @@ import java.util.Random;
  * In other case (when task identifier is not provided in the parameters) it will be generated randomly;
  *
  */
+@Deprecated
 public class ValidationJobWithPostgresMultiThreadedOperation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationJobWithPostgresMultiThreadedOperation.class);
