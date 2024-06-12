@@ -46,7 +46,7 @@ public class JobExecutor {
     LOGGER.info("Job finished! Details: {}", details);
   }
 
-  private JobDetails getProgress(String jobId) {
+  public JobDetails getProgress(String jobId) {
     return restClient.get()
                      .uri("jobs/" + jobId)
                      .retrieve()
