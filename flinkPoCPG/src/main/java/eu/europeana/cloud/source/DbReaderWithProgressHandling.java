@@ -136,6 +136,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     public void notifyNoMoreSplits() {
         LOGGER.debug("Notified that there are no more splits");
         noMoreSplits = true;
+        unblockReader();
     }
 
     @Override

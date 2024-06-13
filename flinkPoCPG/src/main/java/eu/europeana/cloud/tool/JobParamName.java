@@ -21,6 +21,26 @@ public class JobParamName {
     public static final String DATASOURCE_USERNAME = "datasource.username";
     public static final String DATASOURCE_PASSWORD = "datasource.password";
 
+    public static final String INDEXING_PRESERVETIMESTAMPS = "preserveTimestamps";
+    public static final String INDEXING_PERFORMREDIRECTS = "performRedirects";
+
+    public static final String INDEXING_MONGOINSTANCES = "indexing.mongoInstances";
+    public static final String INDEXING_MONGOPORTNUMBER = "indexing.mongoPortNumber";
+    public static final String INDEXING_MONGODBNAME = "indexing.mongoDbName";
+    public static final String INDEXING_MONGOREDIRECTDBNAME = "indexing.mongoRedirectsDbName";
+    public static final String INDEXING_MONGOUSERNAME = "indexing.mongoUsername";
+    public static final String INDEXING_MONGOPASSWORD = "indexing.mongoPassword";
+    public static final String INDEXING_MONGOAUTHDB = "indexing.mongoAuthDB";
+    public static final String INDEXING_MONGOUSESSL = "indexing.mongoUseSSL";
+    public static final String INDEXING_MONGOREADPREFERENCE = "indexing.mongoReadPreference";
+    public static final String INDEXING_MONGOPOOLSIZE = "indexing.mongoPoolSize";
+    public static final String INDEXING_SOLRINSTANCES = "indexing.solrInstances";
+    public static final String INDEXING_ZOOKEEPERINSTANCES = "indexing.zookeeperInstances";
+    public static final String INDEXING_ZOOKEEPERPORTNUMBER = "indexing.zookeeperPortNumber";
+    public static final String INDEXING_ZOOKEEPERCHROOT = "indexing.zookeeperChroot";
+    public static final String INDEXING_ZOOKEEPERDEFAULTCOLLECTION = "indexing.zookeeperDefaultCollection";
+    public static final String INDEXING_MONGOAPPLICATIONNAME = "indexing.mongoApplicationName";
+
     private JobParamName() {
     }
 

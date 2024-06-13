@@ -19,6 +19,15 @@ public class JobParamValidatorFactory {
             case JobName.NORMALIZATION -> {
                 return new NormalizationJobParamValidator();
             }
+            case JobName.ENRICHMENT -> {
+                return new EnrichmentJobParamValidator();
+            }
+            case JobName.MEDIA -> {
+                return new MediaJobParamValidator();
+            }
+            case JobName.INDEXING -> {
+                return new IndexingJobParamValidator();
+            }
             default -> throw new IllegalArgumentException("No validator for: " + jobName);
         }
     }
