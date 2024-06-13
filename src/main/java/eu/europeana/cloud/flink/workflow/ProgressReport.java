@@ -12,6 +12,7 @@ import eu.europeana.cloud.flink.workflow.entities.JobDetails;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,15 +22,22 @@ public class ProgressReport {
   private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static void main(String[] args) throws IOException {
-    final String jobId = "21ac30a44afd90da05a099e994577294";
-    String datasetId = "1";
-    String sourceExecutionId = "5b4afb60-27d6-11ef-b3e7-3fe03a920947";
+    final String jobId = "171de25fe70bf53dff625d545aed6eac";
+    final String datasetId = "1";
+    final String providedSourceExecutionId = "5b4afb60-27d6-11ef-b3e7-3fe03a920947";
     ParameterTool parameterTool = ParameterTool.fromArgs(args);
     Properties properties = readProperties(parameterTool.getRequired(CONFIGURATION_FILE_PATH));
-
     final JobExecutor jobExecutor = new JobExecutor(properties);
     final JobDetails jobDetails = jobExecutor.getProgress(jobId);
+
     final String targetExecutionId = extractExecutionId(jobDetails.getName());
+    final String sourceExecutionId;
+    if (Pattern.compile(Pattern.quote("OAI"), Pattern.CASE_INSENSITIVE).matcher(jobDetails.getName()).find()){
+      //For OAI we don't know the source size so we the source is updated at the same time as the target instead of showing 0.
+      sourceExecutionId = targetExecutionId;
+    } else {
+      sourceExecutionId = providedSourceExecutionId;
+    }
     CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
 
     await().forever().until(() -> {
