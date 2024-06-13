@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-taskmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: taskmanager
+    spec:
+      imagePullSecrets:
+        - name: psnc-registry-credentials
+      containers:
+        - name: taskmanager
+          image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest
+          imagePullPolicy: Always
+          args: ["taskmanager"]
+          ports:
+            - containerPort: 6122
+              name: rpc
+          livenessProbe:
+            tcpSocket:
+              port: 6122
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          volumeMounts:
+            - name: flink-config-volume
+              mountPath: /opt/flink/conf/
+            - name: job-manager-checkpoints-volume-claim
+              mountPath: /data/flink/checkpoints
+          securityContext:
+            runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+      volumes:
+        - name: flink-config-volume
+          configMap:
+            name: flink-config
+            items:
+              - key: flink-conf.yaml
+                path: flink-conf.yaml
+              - key: log4j-console.properties
+                path: log4j-console.properties
+        - name: job-manager-checkpoints-volume-claim
+          persistentVolumeClaim:
+            claimName: job-manager-checkpoints-volume-claim
