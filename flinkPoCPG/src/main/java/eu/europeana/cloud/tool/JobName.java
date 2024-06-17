@@ -9,6 +9,7 @@ public class JobName {
     public static final String ENRICHMENT = "ENRICHMENT";
     public static final String MEDIA = "MEDIA";
     public static final String INDEXING = "INDEXING";
+    public static final String OAI_HARVEST = "OAI_HARVEST";
 
     private JobName() {
     }

@@ -28,6 +28,9 @@ public class JobParamValidatorFactory {
             case JobName.INDEXING -> {
                 return new IndexingJobParamValidator();
             }
+            case JobName.OAI_HARVEST -> {
+                return new OAIJobParamValidator();
+            }
             default -> throw new IllegalArgumentException("No validator for: " + jobName);
         }
     }

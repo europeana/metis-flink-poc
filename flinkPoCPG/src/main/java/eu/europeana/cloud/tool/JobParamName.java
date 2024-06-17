@@ -41,6 +41,11 @@ public class JobParamName {
     public static final String INDEXING_ZOOKEEPERDEFAULTCOLLECTION = "indexing.zookeeperDefaultCollection";
     public static final String INDEXING_MONGOAPPLICATIONNAME = "indexing.mongoApplicationName";
 
+    //OAI
+    public static final String SET_SPEC = "setSpec";
+    public static final String METADATA_PREFIX = "metadataPrefix";
+    public static final String OAI_REPOSITORY_URL = "oaiRepositoryUrl";
+
     private JobParamName() {
     }
 
