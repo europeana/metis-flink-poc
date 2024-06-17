@@ -1,7 +1,6 @@
 package eu.europeana.cloud.operator;
 
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.tool.JobName;
 import eu.europeana.cloud.tool.JobParamName;
@@ -32,49 +31,32 @@ public class TransformationOperator extends ProcessFunction<ExecutionRecord, Exe
     public void processElement(ExecutionRecord sourceExecutionRecord, ProcessFunction<ExecutionRecord, ExecutionRecordResult>.Context ctx, Collector<ExecutionRecordResult> out) throws Exception {
 
         try {
-            try (final XsltTransformer xsltTransformer = prepareXsltTransformer()) {
+            final XsltTransformer xsltTransformer = prepareXsltTransformer();
 
-                StringWriter writer =
-                        xsltTransformer.transform(
-                                sourceExecutionRecord.getRecordData().getBytes(StandardCharsets.UTF_8),
-                                prepareEuropeanaGeneratedIdsMap(sourceExecutionRecord));
+            StringWriter writer =
+                    xsltTransformer.transform(
+                            sourceExecutionRecord.getRecordData().getBytes(StandardCharsets.UTF_8),
+                            prepareEuropeanaGeneratedIdsMap(sourceExecutionRecord));
 
-                out.collect(
-                        ExecutionRecordResult
-                                .builder()
-                                .executionRecord(
-                                        ExecutionRecord.builder()
-                                                .executionRecordKey(
-                                                        ExecutionRecordKey.builder()
-                                                                .datasetId(sourceExecutionRecord.getExecutionRecordKey().getDatasetId())
-                                                                .executionId(parameterTool.get(JobParamName.TASK_ID))
-                                                                .recordId(sourceExecutionRecord.getExecutionRecordKey().getRecordId())
-                                                                .build())
-                                                .executionName(JobName.TRANSFORMATION)
-                                                .recordData(writer.toString())
-                                                .build()
-                                ).build()
-                );
+            out.collect(
+                    ExecutionRecordResult.from(
+                            sourceExecutionRecord,
+                            parameterTool.get(JobParamName.TASK_ID),
+                            JobName.TRANSFORMATION,
+                            writer.toString(),
+                            null)
+            );
 
-            }
             LOGGER.debug("Processed record, id: {}", sourceExecutionRecord.getExecutionRecordKey().getRecordId());
         } catch (Exception e) {
             LOGGER.warn("{} exception: {}", getClass().getName(), sourceExecutionRecord.getExecutionRecordKey().getRecordId(), e);
             out.collect(
-                    ExecutionRecordResult
-                            .builder()
-                            .executionRecord(
-                                    ExecutionRecord.builder()
-                                            .executionRecordKey(
-                                                    ExecutionRecordKey.builder()
-                                                            .datasetId(sourceExecutionRecord.getExecutionRecordKey().getDatasetId())
-                                                            .executionId(parameterTool.get(JobParamName.TASK_ID))
-                                                            .recordId(sourceExecutionRecord.getExecutionRecordKey().getRecordId())
-                                                            .build())
-                                            .executionName(JobName.TRANSFORMATION)
-                                            .recordData("")
-                                            .build()
-                            ).build()
+                    ExecutionRecordResult.from(
+                            sourceExecutionRecord,
+                            parameterTool.get(JobParamName.TASK_ID),
+                            JobName.TRANSFORMATION,
+                            "",
+                            e.getMessage())
             );
         }
     }

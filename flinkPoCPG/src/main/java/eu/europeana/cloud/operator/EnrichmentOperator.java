@@ -1,7 +1,6 @@
 package eu.europeana.cloud.operator;
 
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.tool.JobName;
 import eu.europeana.cloud.tool.JobParamName;
@@ -54,39 +53,21 @@ public class EnrichmentOperator extends ProcessFunction<ExecutionRecord, Executi
         if (enrichmentResult.getRecordStatus() != ProcessedResult.RecordStatus.CONTINUE) {
             String reportString = enrichmentResult.getReport().stream().map(Object::toString).collect(Collectors.joining("\n"));
             out.collect(
-                    ExecutionRecordResult
-                            .builder()
-                            .executionRecord(
-                                    ExecutionRecord.builder()
-                                            .executionRecordKey(
-                                                    ExecutionRecordKey.builder()
-                                                            .datasetId(sourceExecutionRecord.getExecutionRecordKey().getDatasetId())
-                                                            .executionId(parameterTool.get(JobParamName.TASK_ID))
-                                                            .recordId(sourceExecutionRecord.getExecutionRecordKey().getRecordId())
-                                                            .build())
-                                            .executionName(JobName.ENRICHMENT)
-                                            .recordData("")
-                                            .build()
-                            )
-                            .exception(reportString)
-                            .build()
+                    ExecutionRecordResult.from(
+                            sourceExecutionRecord,
+                            parameterTool.get(JobParamName.TASK_ID),
+                            JobName.ENRICHMENT,
+                            "",
+                            reportString)
             );
         } else {
             out.collect(
-                    ExecutionRecordResult
-                            .builder()
-                            .executionRecord(
-                                    ExecutionRecord.builder()
-                                            .executionRecordKey(
-                                                    ExecutionRecordKey.builder()
-                                                            .datasetId(sourceExecutionRecord.getExecutionRecordKey().getDatasetId())
-                                                            .executionId(parameterTool.get(JobParamName.TASK_ID))
-                                                            .recordId(sourceExecutionRecord.getExecutionRecordKey().getRecordId())
-                                                            .build())
-                                            .executionName(JobName.ENRICHMENT)
-                                            .recordData(enrichmentResult.getProcessedRecord())
-                                            .build()
-                            ).build()
+                    ExecutionRecordResult.from(
+                            sourceExecutionRecord,
+                            parameterTool.get(JobParamName.TASK_ID),
+                            JobName.ENRICHMENT,
+                            enrichmentResult.getProcessedRecord(),
+                            null)
             );
         }
     }

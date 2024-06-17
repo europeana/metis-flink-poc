@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  *
  *
  * <p><b>Progress tracking:</b></p>
- * <p>In this implementation progress tracking were moved from {@link eu.europeana.cloud.sink.ProgressingDbSinkFunction} to {@link eu.europeana.cloud.source.DbReaderWithProgressHandling}
+ * <p>In this implementation progress tracking were moved to {@link eu.europeana.cloud.source.DbReaderWithProgressHandling}
  * During job startup {@link eu.europeana.cloud.source.DbEnumerator}
  * will read the status from the DB and resume the job from the first chunk that was not fully processed.
  * In this approach it is possible that some records will be reprocessed, but in the worse case there will be

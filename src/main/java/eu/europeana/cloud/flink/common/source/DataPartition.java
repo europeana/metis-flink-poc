@@ -8,6 +8,6 @@ public record DataPartition(long offset, long limit) implements SourceSplit, Ser
 
     @Override
     public String splitId() {
-        return "customSprintId";
+        return "customSplitId";
     }
 }

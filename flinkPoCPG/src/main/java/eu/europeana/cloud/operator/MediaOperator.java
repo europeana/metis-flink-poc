@@ -75,20 +75,12 @@ public class MediaOperator extends ProcessFunction<ExecutionRecord, ExecutionRec
                 outputRdfBytes = getOutputRdf(enrichedRdf);
 
         out.collect(
-                ExecutionRecordResult
-                        .builder()
-                        .executionRecord(
-                                ExecutionRecord.builder()
-                                        .executionRecordKey(
-                                                ExecutionRecordKey.builder()
-                                                        .datasetId(sourceExecutionRecord.getExecutionRecordKey().getDatasetId())
-                                                        .executionId(parameterTool.get(JobParamName.TASK_ID))
-                                                        .recordId(sourceExecutionRecord.getExecutionRecordKey().getRecordId())
-                                                        .build())
-                                        .executionName(JobName.TRANSFORMATION)
-                                        .recordData(new String(outputRdfBytes))
-                                        .build()
-                        ).build()
+                ExecutionRecordResult.from(
+                        sourceExecutionRecord,
+                        parameterTool.get(JobParamName.TASK_ID),
+                        JobName.MEDIA,
+                        new String(outputRdfBytes),
+                        null)
         );
     }
 
