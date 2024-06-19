@@ -32,9 +32,9 @@
         <Root level="warn">
             <AppenderRef ref="STDOUT"/>
         </Root>
-        <Logger name="eu.europeana" level="info"/>
-        <Logger name="eu.europeana.cloud.flink" level="info"/>
-        <Logger name="eu.europeana.cloud.flink.oai" level="info"/>
+        <Logger name="eu.europeana" level="debug"/>
+        <Logger name="eu.europeana.cloud.flink" level="debug"/>
+        <Logger name="eu.europeana.cloud.flink.oai" level="debug"/>
 
         <Logger name="org.apache.flink.connector.cassandra.source" level="info"/>
         <Logger name="org.apache.flink.streaming.connectors.cassandra" level="info"/>
