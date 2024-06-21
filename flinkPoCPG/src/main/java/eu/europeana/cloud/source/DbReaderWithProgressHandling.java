@@ -19,8 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecord, DataPartition> {
@@ -30,12 +29,15 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private ExecutionRecordRepository executionRecordRepository;
     private TaskInfoRepository taskInfoRepository;
     private CompletableFuture<Void> readerAvailable = new CompletableFuture<>();
+    private final int maxRecordPending;
+    private int currentRecordPendingCount;
+    private final TreeMap<Long, Integer> recordPendingCountPerCheckpoint = new TreeMap<>();
     private boolean splitFetched = false;
     private boolean noMoreSplits = false;
-    private boolean readerBlocked = false;
-    private long checkpointId;
-    private long taskId;
-    private int counter = 0;
+    private long checkpointId=-1;
+    private final long taskId;
+
+    private ResultSet polledRecords = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbReaderWithProgressHandling.class);
 
@@ -47,6 +49,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         this.context = context;
         this.parameterTool = parameterTool;
         taskId = parameterTool.getLong(JobParamName.TASK_ID);
+        maxRecordPending = parameterTool.has(JobParamName.MAX_RECORD_PENDING) ? parameterTool.getInt(JobParamName.MAX_RECORD_PENDING) : 100;
     }
 
     @Override
@@ -69,59 +72,83 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
             splitFetched = true;
         }
         if (!currentSplits.isEmpty()) {
-            counter = 0;
-            DataPartition currentSplit = currentSplits.removeFirst();
-            try {
-                ResultSet records = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
-                        parameterTool.get(JobParamName.DATASET_ID),
-                        parameterTool.get(JobParamName.EXECUTION_ID),
-                        currentSplit.offset(), currentSplit.limit());
-                while (records.next()) {
-                    ExecutionRecord executionRecord = ExecutionRecord.builder()
-                            .executionRecordKey(
-                                    ExecutionRecordKey.builder()
-                                            .datasetId(records.getString("dataset_id"))
-                                            .executionId(records.getString("execution_id"))
-                                            .recordId(records.getString("record_id"))
-                                            .build())
-                            .executionName(records.getString("execution_name"))
-                            .recordData(new String(records.getBytes("record_data")))
-                            .build();
-                    LOGGER.debug("Emitting record {}", executionRecord.getExecutionRecordKey().getRecordId());
-                    counter++;
-                    output.collect(executionRecord);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+            DataPartition currentSplit = currentSplits.getFirst();
+            if (polledRecords == null){
+                LOGGER.debug("Fetching records from database");
+                try {
+                    polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
+                            parameterTool.get(JobParamName.DATASET_ID),
+                            parameterTool.get(JobParamName.EXECUTION_ID),
+                            currentSplit.offset(), currentSplit.limit());
+                } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+            } else {
+                LOGGER.debug("Already fetched records exist");
             }
-            splitFetched = false;
-            blockReader();
+
+            boolean isResultSetProcessed = true;
+            while (polledRecords.next()) {
+                ExecutionRecord executionRecord = ExecutionRecord.builder()
+                        .executionRecordKey(
+                                ExecutionRecordKey.builder()
+                                        .datasetId(polledRecords.getString("dataset_id"))
+                                        .executionId(polledRecords.getString("execution_id"))
+                                        .recordId(polledRecords.getString("record_id"))
+                                        .build())
+                        .executionName(polledRecords.getString("execution_name"))
+                        .recordData(new String(polledRecords.getBytes("record_data")))
+                        .build();
+                currentRecordPendingCount ++;
+                int currentlyPendingForThisCheckpoint = 1;
+                if (recordPendingCountPerCheckpoint.containsKey(checkpointId)){
+                    currentlyPendingForThisCheckpoint = recordPendingCountPerCheckpoint.get(checkpointId);
+                    recordPendingCountPerCheckpoint.put(checkpointId, ++currentlyPendingForThisCheckpoint);
+                } else {
+                    recordPendingCountPerCheckpoint.put(checkpointId, currentlyPendingForThisCheckpoint);
+                }
+                LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
+                LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, checkpointId);
+                output.collect(executionRecord);
+                if (currentRecordPendingCount >= maxRecordPending){
+                    LOGGER.debug("Blocking reader due to hitting pending records limit");
+                    blockReader();
+                    isResultSetProcessed = false;
+                    break;
+                }
+            }
+            if (isResultSetProcessed) {
+                LOGGER.debug("Removing split due to exhaustion of polled result set");
+                currentSplits.removeFirst();
+                splitFetched = false;
+                polledRecords = null;
+                return InputStatus.MORE_AVAILABLE;
+            } else {
+                LOGGER.debug("Sending signal about more records being present in polled result set");
+            }
         }
         return InputStatus.NOTHING_AVAILABLE;
     }
 
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
-        if (receivedSnapshotIndicatingEndOfChunk(checkpointId)) {
-            LOGGER.debug("Got checkpoint after blockage {}", checkpointId);
-            updateProgress();
+        LOGGER.debug("Got checkpoint after blockage {}", checkpointId);
+        updateProgress(checkpointId);
+        if (currentRecordPendingCount < maxRecordPending) {
             unblockReader();
-        } else {
-            LOGGER.debug("Ignoring checkpoint");
         }
     }
 
     @Override
     public List<DataPartition> snapshotState(long checkpointId) {
-        if (readerBlocked && this.checkpointId == 0) {
-            LOGGER.debug("Storing snapshotId={} for finished partition ", this.checkpointId);
-            this.checkpointId = checkpointId;
-        }
+        LOGGER.debug("Storing snapshotId={} for finished partition", this.checkpointId);
+        this.checkpointId = checkpointId;
         return List.of();
     }
 
     @Override
     public CompletableFuture<Void> isAvailable() {
+        LOGGER.debug("Reader availability state: {} ", readerAvailable.state());
         return readerAvailable;
     }
 
@@ -144,31 +171,34 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     }
 
-    private void updateProgress() throws TaskInfoNotFoundException {
-        LOGGER.debug("Storing task progress");
-        TaskInfo taskInfo = taskInfoRepository.get(taskId);
-        taskId = taskInfo.taskId();
-        taskInfoRepository.update(
-                new TaskInfo(
-                        taskInfo.taskId(),
-                        taskInfo.commitCount() + 1,
-                        taskInfo.writeCount() + counter));
+    private void updateProgress(long checkpointId) throws TaskInfoNotFoundException {
+        NavigableMap<Long, Integer> recordsAlreadyProcessed = recordPendingCountPerCheckpoint.headMap(checkpointId, false);
+        for (Map.Entry<Long, Integer> entry : recordsAlreadyProcessed.entrySet()) {
+            Long currentlyProcessedCheckpointId = entry.getKey();
+            Integer pendingRecordCount = entry.getValue();
+            LOGGER.debug("Storing task progress for given checkpoint: {} records: {}", currentlyProcessedCheckpointId, pendingRecordCount);
+            TaskInfo taskInfo = taskInfoRepository.get(taskId);
+            taskInfoRepository.update(
+                    new TaskInfo(
+                            taskInfo.taskId(),
+                            taskInfo.commitCount() + 1,
+                            taskInfo.writeCount() + pendingRecordCount));
+            currentRecordPendingCount -= pendingRecordCount;
+            recordPendingCountPerCheckpoint.remove(currentlyProcessedCheckpointId);
+        }
+        if (!recordsAlreadyProcessed.isEmpty()){
+            LOGGER.debug("Nothing to store for checkpoint: {} or less", checkpointId);
+        }
     }
 
     private void blockReader() {
         LOGGER.debug("Blocking the reader");
         readerAvailable = new CompletableFuture<>();
-        readerBlocked = true;
     }
 
     private void unblockReader() {
-        LOGGER.debug("Unblocking the reader");
+        LOGGER.debug("Unblocking the reader - current pending: {}", currentRecordPendingCount);
         readerAvailable.complete(null);
-        readerBlocked = false;
-        checkpointId = 0;
     }
 
-    private boolean receivedSnapshotIndicatingEndOfChunk(long receivedCheckpointId) {
-        return checkpointId != 0 && this.checkpointId <= receivedCheckpointId;
-    }
 }

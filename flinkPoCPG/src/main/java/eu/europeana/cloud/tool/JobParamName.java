@@ -4,6 +4,7 @@ public class JobParamName {
 
     public static final String OPERATOR_PARALLELISM = "OPERATOR_PARALLELISM";
     public static final String TASK_ID = "taskId";
+    public static final String MAX_RECORD_PENDING = "maxRecordPending";
     public static final String VALIDATION_TYPE = "validationType";
     public static final String DATASET_ID = "datasetId";
     public static final String EXECUTION_ID = "executionId";
