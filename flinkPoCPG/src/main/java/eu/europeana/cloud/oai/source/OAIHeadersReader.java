@@ -11,6 +11,7 @@ import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeaderIterator;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -29,7 +30,9 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   private final SourceReaderContext context;
   private final ParameterTool parameterTool;
   private boolean active;
+
   private CompletableFuture<Void> available = new CompletableFuture<>();
+  private boolean completed;
 
   public OAIHeadersReader(SourceReaderContext context, ParameterTool parameterTool) {
     this.context = context;
@@ -44,6 +47,10 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public InputStatus pollNext(ReaderOutput<OaiRecordHeader> output) throws Exception {
+    if (completed) {
+      LOGGER.info("Poll on completed OAI source.");
+      return InputStatus.END_OF_INPUT;
+    }
     LOGGER.info("Executed poll: active: {}", active);
     if (!active) {
       available = new CompletableFuture<>();
@@ -64,7 +71,10 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
     });
     headerIterator.close();
     active = false;
-    available = new CompletableFuture<>();
+    available = CompletableFuture.completedFuture(null);
+    completed=true;
+
+    LOGGER.info("Completed OAI source.");
     return InputStatus.END_OF_INPUT;
   }
 
@@ -95,7 +105,7 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public void close() throws Exception {
-    LOGGER.info("close");
+    LOGGER.info("OAI - close");
     //No needed for now
   }
 }
