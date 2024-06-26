@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
 import static eu.europeana.cloud.tool.JobParamName.METADATA_PREFIX;
 import static eu.europeana.cloud.tool.JobParamName.OAI_REPOSITORY_URL;
@@ -11,7 +11,6 @@ import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeaderIterator;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -33,6 +32,8 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   private CompletableFuture<Void> available = new CompletableFuture<>();
   private boolean completed;
+  private OaiHarvester harvester;
+  private OaiHarvest oaiHarvest;
 
   public OAIHeadersReader(SourceReaderContext context, ParameterTool parameterTool) {
     this.context = context;
@@ -43,6 +44,11 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   @Override
   public void start() {
     LOGGER.info("Started oai reader.");
+    harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
+    oaiHarvest = new OaiHarvest(
+        parameterTool.getRequired(OAI_REPOSITORY_URL),
+        parameterTool.getRequired(METADATA_PREFIX),
+        parameterTool.getRequired(SET_SPEC));
   }
 
   @Override
@@ -58,12 +64,6 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
       return InputStatus.NOTHING_AVAILABLE;
     }
 
-    OaiHarvester harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
-
-    OaiHarvest oaiHarvest = new OaiHarvest(
-        parameterTool.getRequired(OAI_REPOSITORY_URL),
-        parameterTool.getRequired(METADATA_PREFIX),
-        parameterTool.getRequired(SET_SPEC));
     OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(oaiHarvest);
     headerIterator.forEach(oaiHeader -> {
       output.collect(oaiHeader);

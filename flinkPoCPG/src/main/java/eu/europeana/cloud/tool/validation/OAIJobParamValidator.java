@@ -8,7 +8,6 @@ public class OAIJobParamValidator implements JobParamValidator {
     public void validate(ParameterTool parameterTool) {
 
         parameterTool.getRequired(JobParamName.DATASET_ID);
-        parameterTool.getRequired(JobParamName.EXECUTION_ID);
         parameterTool.getRequired(JobParamName.SET_SPEC);
         parameterTool.getRequired(JobParamName.METADATA_PREFIX);
         parameterTool.getRequired(JobParamName.OAI_REPOSITORY_URL);

@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

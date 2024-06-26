@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,6 +35,7 @@ public class OAIHeadersSplitEnumerator implements SplitEnumerator<OAISplit, OAIE
       LOGGER.info("Assigned split for subtaskId: {}, host: {}", subtaskId, requesterHostname);
     }else{
       LOGGER.info("There are no more splits to assign, for subtaskId: {}, host: {}", subtaskId, requesterHostname);
+      context.signalNoMoreSplits(subtaskId);
     }
   }
 

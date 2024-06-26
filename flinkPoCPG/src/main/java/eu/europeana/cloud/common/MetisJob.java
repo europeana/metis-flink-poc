@@ -31,7 +31,7 @@ public abstract class MetisJob {
         flinkEnvironment = prepareEnvironment();
     }
 
-    private StreamExecutionEnvironment prepareEnvironment() {
+    protected StreamExecutionEnvironment prepareEnvironment() {
         final StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
 
@@ -42,11 +42,11 @@ public abstract class MetisJob {
         return env;
     }
 
-    private void validateJobParams() {
+    protected void validateJobParams() {
         JobParamValidatorFactory.getValidator(jobName).validate(tool);
     }
 
-    private void generateTaskIdIfNeeded() {
+    protected void generateTaskIdIfNeeded() {
         try (TaskInfoRepository taskInfoRepository = new TaskInfoRepository(new DbConnection(tool))) {
             if (tool.get(JobParamName.TASK_ID) == null) {
                 long taskId = taskIdGenerator.nextLong();
@@ -56,9 +56,9 @@ public abstract class MetisJob {
         }
     }
 
-    private void prepareJob() {
+    protected void prepareJob() {
         flinkEnvironment.fromSource(
-                        new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), "dbSource"
+                        new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), createSourceName()
                 ).setParallelism(1)
                 .process(getMainOperator()).setParallelism(
                         tool.getInt(
@@ -70,8 +70,17 @@ public abstract class MetisJob {
     public void execute() throws Exception {
         validateJobParams();
         prepareJob();
-        flinkEnvironment.execute();
+        flinkEnvironment.execute(enrichedJobName());
     }
+
+    private String enrichedJobName() {
+        return jobName + " (dataset: " + tool.get(JobParamName.DATASET_ID) + ", taskId: " + tool.get(JobParamName.TASK_ID) + ")";
+    }
+
+    private String createSourceName() {
+        return "dbSource (dataset: " + tool.get(JobParamName.DATASET_ID) + ", executionId: " + tool.get(JobParamName.EXECUTION_ID) + ")";
+    }
+
 
     public abstract ProcessFunction<ExecutionRecord, ExecutionRecordResult> getMainOperator();
 

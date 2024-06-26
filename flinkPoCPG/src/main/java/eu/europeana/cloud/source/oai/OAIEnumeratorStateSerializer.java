@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

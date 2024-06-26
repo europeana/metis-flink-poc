@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import java.io.IOException;
