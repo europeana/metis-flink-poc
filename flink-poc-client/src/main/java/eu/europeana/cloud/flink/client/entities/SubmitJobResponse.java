@@ -1,4 +1,4 @@
-package eu.europeana.cloud.flink.workflow.entities;
+package eu.europeana.cloud.flink.client.entities;
 
 import lombok.Data;
 

@@ -9,7 +9,7 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
 import com.datastax.driver.core.utils.UUIDs;
 import eu.europeana.cloud.flink.common.GenericJob;
 import eu.europeana.cloud.flink.common.GenericJobFactory;
-import eu.europeana.cloud.flink.workflow.entities.SubmitJobRequest;
+import eu.europeana.cloud.flink.client.entities.SubmitJobRequest;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import java.util.UUID;
 import org.apache.flink.api.common.JobExecutionResult;

@@ -7,8 +7,9 @@ import static org.awaitility.Awaitility.await;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
+import eu.europeana.cloud.flink.client.JobExecutor;
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
-import eu.europeana.cloud.flink.workflow.entities.JobDetails;
+import eu.europeana.cloud.flink.client.entities.JobDetails;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;

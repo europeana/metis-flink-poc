@@ -485,6 +485,11 @@
             <artifactId>awaitility</artifactId>
             <version>4.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>eu.europeana.cloud.flink</groupId>
+            <artifactId>flink-poc-client</artifactId>
+            <version>1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

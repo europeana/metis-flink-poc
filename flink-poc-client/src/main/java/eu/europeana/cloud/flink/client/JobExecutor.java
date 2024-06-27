@@ -1,8 +1,8 @@
-package eu.europeana.cloud.flink.workflow;
+package eu.europeana.cloud.flink.client;
 
-import eu.europeana.cloud.flink.workflow.entities.JobDetails;
-import eu.europeana.cloud.flink.workflow.entities.SubmitJobRequest;
-import eu.europeana.cloud.flink.workflow.entities.SubmitJobResponse;
+import eu.europeana.cloud.flink.client.entities.JobDetails;
+import eu.europeana.cloud.flink.client.entities.SubmitJobRequest;
+import eu.europeana.cloud.flink.client.entities.SubmitJobResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Properties;
