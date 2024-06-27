@@ -1,6 +1,7 @@
 package eu.europeana.cloud.tool;
 
 
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.java.utils.ParameterTool;
 
 import java.io.Serializable;

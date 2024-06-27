@@ -1,6 +1,6 @@
 package eu.europeana.cloud.tool.validation;
 
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.java.utils.ParameterTool;
 
 public class MediaJobParamValidator implements JobParamValidator {

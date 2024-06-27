@@ -1,4 +1,4 @@
-package eu.europeana.cloud.tool;
+package eu.europeana.cloud.flink.client.constants.postgres;
 
 public class JobParam {
 

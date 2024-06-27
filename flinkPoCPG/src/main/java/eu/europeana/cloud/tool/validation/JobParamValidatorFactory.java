@@ -1,6 +1,6 @@
 package eu.europeana.cloud.tool.validation;
 
-import eu.europeana.cloud.tool.JobName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
 
 public class JobParamValidatorFactory {
 

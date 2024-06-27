@@ -1,9 +1,9 @@
 package eu.europeana.cloud.operator;
 
-import static eu.europeana.cloud.tool.JobName.OAI_HARVEST;
-import static eu.europeana.cloud.tool.JobParamName.DATASET_ID;
-import static eu.europeana.cloud.tool.JobParamName.METADATA_PREFIX;
-import static eu.europeana.cloud.tool.JobParamName.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobName.OAI_HARVEST;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.DATASET_ID;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.METADATA_PREFIX;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.OAI_REPOSITORY_URL;
 
 
 import eu.europeana.cloud.model.ExecutionRecord;
@@ -11,7 +11,7 @@ import eu.europeana.cloud.model.ExecutionRecord.ExecutionRecordBuilder;
 import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.model.ExecutionRecordResult.ExecutionRecordResultBuilder;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecord;

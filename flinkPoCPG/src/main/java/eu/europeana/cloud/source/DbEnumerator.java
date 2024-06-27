@@ -6,7 +6,7 @@ import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.tool.DbConnection;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.java.utils.ParameterTool;
