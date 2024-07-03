@@ -6,11 +6,14 @@ import eu.europeana.cloud.tool.DbConnection;
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ExecutionRecordExceptionLogRepository implements DbRepository, Serializable {
 
     private final DbConnection dbConnection;
+
+    private static final String NO_OF_ELEMENTS = "select count(*) as elements from \"batch-framework\".execution_record_exception_log where dataset_id = ? and execution_id = ?";
 
     public ExecutionRecordExceptionLogRepository(DbConnection dbConnection) {
         this.dbConnection = dbConnection;
@@ -30,6 +33,23 @@ public class ExecutionRecordExceptionLogRepository implements DbRepository, Seri
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public long countByDatasetIdAndExecutionId(String datasetId, String executionId) throws SQLException {
+
+        ResultSet resultSet;
+        try (PreparedStatement preparedStatement = dbConnection.getConnection().prepareStatement(NO_OF_ELEMENTS)) {
+            preparedStatement.setString(1, datasetId);
+            preparedStatement.setString(2, executionId);
+
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getLong("elements");
+            } else {
+                return 0L;
+            }
         }
     }
 

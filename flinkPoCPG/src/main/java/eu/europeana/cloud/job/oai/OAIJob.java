@@ -36,6 +36,7 @@ public class OAIJob extends MetisJob {
     }
 
 
+    @Override
     protected void prepareJob() {
         int parallelism = tool.getInt(
             JobParamName.OPERATOR_PARALLELISM,
@@ -48,8 +49,6 @@ public class OAIJob extends MetisJob {
         .process(new IdAssigningOperator()).setParallelism(parallelism)
                         .addSink(new DbSinkFunction()).setParallelism(1);
     }
-
-
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Starting {}...", OAIJob.class.getSimpleName());
@@ -65,5 +64,4 @@ public class OAIJob extends MetisJob {
     public ProcessFunction<ExecutionRecord, ExecutionRecordResult> getMainOperator(){
         throw new UnsupportedOperationException();
     }
-
 }

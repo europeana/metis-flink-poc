@@ -5,15 +5,16 @@ import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Session;
 import eu.europeana.cloud.flink.client.JobExecutor;
-import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.client.entities.JobDetails;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 import java.util.regex.Pattern;
+
+import eu.europeana.cloud.repository.ExecutionRecordExceptionLogRepository;
+import eu.europeana.cloud.repository.ExecutionRecordRepository;
+import eu.europeana.cloud.tool.DbConnection;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,39 +40,29 @@ public class ProgressReport {
     } else {
       sourceExecutionId = providedSourceExecutionId;
     }
-    CassandraClusterBuilder cassandraClusterBuilder = new CassandraClusterBuilder(properties);
 
     await().forever().until(() -> {
       final JobDetails jobDetailsInternal = jobExecutor.getProgress(jobId);
-      printProgress(cassandraClusterBuilder, datasetId, sourceExecutionId, targetExecutionId);
+      printProgress(datasetId, sourceExecutionId, targetExecutionId, parameterTool);
       return jobDetailsInternal.getState().equals("FINISHED");
     });
   }
 
-  private static void printProgress(CassandraClusterBuilder cassandraClusterBuilder, String datasetId, String sourceExecutionId,
-      String targetExecutionId) {
-    final ResultSet resultSetSource;
-    final ResultSet resultSetSuccess;
-    final ResultSet resultSetException;
-    try (Session session = cassandraClusterBuilder.getCluster().connect()) {
-      resultSetSource = session.execute(
-          format("SELECT COUNT(*) FROM flink_poc.execution_record WHERE dataset_id='%s' AND execution_id='%s';", datasetId,
-              sourceExecutionId));
-      resultSetSuccess = session.execute(
-          format("SELECT COUNT(*) FROM flink_poc.execution_record WHERE dataset_id='%s' AND execution_id='%s';", datasetId,
-              targetExecutionId));
-      resultSetException = session.execute(
-          format("SELECT COUNT(*) FROM flink_poc.execution_record_exception_log WHERE dataset_id='%s' AND execution_id='%s';",
-              datasetId, targetExecutionId));
-      session.getCluster().close();
-    }
+  private static void printProgress(String datasetId, String sourceExecutionId,
+      String targetExecutionId, ParameterTool parameterTool) {
 
-    final long sourceTotal = resultSetSource.one().getLong("count");
-    final long processedSuccess = resultSetSuccess.one().getLong("count");
-    final long processedException = resultSetException.one().getLong("count");
-    final long processed = processedSuccess + processedException;
-    LOGGER.info(
-        format("Task progress - Processed/SourceTotal: %s/%s, Exceptions: %s", processed, sourceTotal, processedException));
+    try (ExecutionRecordRepository executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
+         ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnection(parameterTool))) {
+      final long sourceTotal = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);
+      final long processedSuccess = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, targetExecutionId);
+      final long processedException = executionRecordExceptionLogRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);
+      final long processed = processedSuccess + processedException;
+      LOGGER.info(
+              format("Task progress - Processed/SourceTotal: %s/%s, Exceptions: %s", processed, sourceTotal, processedException));
+
+    } catch (Exception e) {
+      LOGGER.error("Unable to read progress", e);
+    }
   }
 
   private static String extractExecutionId(String jobName) {
