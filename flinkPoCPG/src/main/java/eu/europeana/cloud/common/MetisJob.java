@@ -1,5 +1,6 @@
 package eu.europeana.cloud.common;
 
+import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.model.TaskInfo;
@@ -48,10 +49,17 @@ public abstract class MetisJob {
 
     protected void generateTaskIdIfNeeded() {
         try (TaskInfoRepository taskInfoRepository = new TaskInfoRepository(new DbConnection(tool))) {
-            if (tool.get(JobParamName.TASK_ID) == null) {
-                long taskId = taskIdGenerator.nextLong();
+            Long taskId = tool.getLong(JobParamName.TASK_ID);
+            if (taskId == null) {
+                taskId = taskIdGenerator.nextLong();
                 taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
                 tool = tool.mergeWith(ParameterTool.fromMap(Map.of(JobParamName.TASK_ID, taskId + "")));
+            } else {
+                try {
+                    taskInfoRepository.get(taskId);
+                } catch (TaskInfoNotFoundException e) {
+                    taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
+                }
             }
         }
     }

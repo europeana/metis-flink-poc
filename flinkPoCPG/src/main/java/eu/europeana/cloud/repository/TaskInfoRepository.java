@@ -64,7 +64,7 @@ public class TaskInfoRepository implements DbRepository, Serializable {
 
                 );
             } else {
-                throw new TaskInfoNotFoundException();
+                throw new TaskInfoNotFoundException(taskId);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -73,6 +73,8 @@ public class TaskInfoRepository implements DbRepository, Serializable {
 
     @Override
     public void close() {
-        dbConnection.close();
+        if (dbConnection == null) {
+            dbConnection.close();
+        }
     }
 }
