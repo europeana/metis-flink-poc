@@ -49,12 +49,12 @@ public abstract class MetisJob {
 
     protected void generateTaskIdIfNeeded() {
         try (TaskInfoRepository taskInfoRepository = new TaskInfoRepository(new DbConnection(tool))) {
-            Long taskId = tool.getLong(JobParamName.TASK_ID);
-            if (taskId == null) {
-                taskId = taskIdGenerator.nextLong();
+            if (tool.get(JobParamName.TASK_ID) == null) {
+                long taskId = taskIdGenerator.nextLong();
                 taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
                 tool = tool.mergeWith(ParameterTool.fromMap(Map.of(JobParamName.TASK_ID, taskId + "")));
             } else {
+                long taskId = tool.getLong(JobParamName.TASK_ID);
                 try {
                     taskInfoRepository.get(taskId);
                 } catch (TaskInfoNotFoundException e) {
