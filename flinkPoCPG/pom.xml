@@ -13,7 +13,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flink-version>1.18.1</flink-version>
-        <metis.version>12-SNAPSHOT</metis.version>
+        <metis.version>13-SNAPSHOT</metis.version>
         <jackson.version>2.16.1</jackson.version>
         <version.spring-framework>6.1.4</version.spring-framework>
     </properties>
