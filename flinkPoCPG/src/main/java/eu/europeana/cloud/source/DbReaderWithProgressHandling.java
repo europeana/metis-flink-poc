@@ -3,11 +3,10 @@ package eu.europeana.cloud.source;
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
-import eu.europeana.cloud.tool.DbConnection;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
@@ -17,8 +16,6 @@ import org.apache.flink.core.io.InputStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -52,8 +49,8 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     @Override
     public void start() {
         LOGGER.info("Starting source reader");
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
-        taskInfoRepository = new TaskInfoRepository(new DbConnection(parameterTool));
+        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
+        taskInfoRepository = new TaskInfoRepository(new DbConnectionProvider(parameterTool));
     }
 
     @Override
@@ -71,29 +68,16 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         if (!currentSplits.isEmpty()) {
             counter = 0;
             DataPartition currentSplit = currentSplits.removeFirst();
-            try {
-                ResultSet records = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
-                        parameterTool.get(JobParamName.DATASET_ID),
-                        parameterTool.get(JobParamName.EXECUTION_ID),
-                        currentSplit.offset(), currentSplit.limit());
-                while (records.next()) {
-                    ExecutionRecord executionRecord = ExecutionRecord.builder()
-                            .executionRecordKey(
-                                    ExecutionRecordKey.builder()
-                                            .datasetId(records.getString("dataset_id"))
-                                            .executionId(records.getString("execution_id"))
-                                            .recordId(records.getString("record_id"))
-                                            .build())
-                            .executionName(records.getString("execution_name"))
-                            .recordData(new String(records.getBytes("record_data")))
-                            .build();
-                    LOGGER.debug("Emitting record {}", executionRecord.getExecutionRecordKey().getRecordId());
-                    counter++;
-                    output.collect(executionRecord);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            List<ExecutionRecord> results = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
+                    parameterTool.getRequired(JobParamName.DATASET_ID),
+                    parameterTool.getRequired(JobParamName.EXECUTION_ID),
+                    currentSplit.offset(), currentSplit.limit());
+
+            results.forEach(result -> {
+                LOGGER.info("Emitting record {}", result.getExecutionRecordKey().getRecordId());
+                counter++;
+                output.collect(result);
+            });
             splitFetched = false;
             blockReader();
         }
