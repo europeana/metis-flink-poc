@@ -34,7 +34,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private final TreeMap<Long, Integer> recordPendingCountPerCheckpoint = new TreeMap<>();
     private boolean splitFetched = false;
     private boolean noMoreSplits = false;
-    private long checkpointId=-1;
+    private long checkpointId = -1;
     private final long taskId;
 
     private ResultSet polledRecords = null;
@@ -73,7 +73,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         }
         if (!currentSplits.isEmpty()) {
             DataPartition currentSplit = currentSplits.getFirst();
-            if (polledRecords == null){
+            if (polledRecords == null) {
                 LOGGER.debug("Fetching records from database");
                 try {
                     polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
@@ -81,8 +81,8 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                             parameterTool.get(JobParamName.EXECUTION_ID),
                             currentSplit.offset(), currentSplit.limit());
                 } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
+                    throw new RuntimeException(e);
+                }
             } else {
                 LOGGER.debug("Already fetched records exist");
             }
@@ -99,9 +99,9 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                         .executionName(polledRecords.getString("execution_name"))
                         .recordData(new String(polledRecords.getBytes("record_data")))
                         .build();
-                currentRecordPendingCount ++;
+                currentRecordPendingCount++;
                 int currentlyPendingForThisCheckpoint = 1;
-                if (recordPendingCountPerCheckpoint.containsKey(checkpointId)){
+                if (recordPendingCountPerCheckpoint.containsKey(checkpointId)) {
                     currentlyPendingForThisCheckpoint = recordPendingCountPerCheckpoint.get(checkpointId);
                     recordPendingCountPerCheckpoint.put(checkpointId, ++currentlyPendingForThisCheckpoint);
                 } else {
@@ -110,7 +110,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                 LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
                 LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, checkpointId);
                 output.collect(executionRecord);
-                if (currentRecordPendingCount >= maxRecordPending){
+                if (currentRecordPendingCount >= maxRecordPending) {
                     LOGGER.debug("Blocking reader due to hitting pending records limit");
                     blockReader();
                     isResultSetProcessed = false;
@@ -132,7 +132,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     @Override
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
-        LOGGER.debug("Got checkpoint after blockage {}", checkpointId);
+        LOGGER.debug("Checkpoint successfully finished on flink with id: {}", checkpointId);
         updateProgress(checkpointId);
         if (currentRecordPendingCount < maxRecordPending) {
             unblockReader();
@@ -141,7 +141,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     @Override
     public List<DataPartition> snapshotState(long checkpointId) {
-        LOGGER.debug("Storing snapshotId={} for finished partition", this.checkpointId);
+        LOGGER.debug("Storing snapshot for checkpoint with id: {}", this.checkpointId);
         this.checkpointId = checkpointId;
         return List.of();
     }
@@ -186,7 +186,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
             currentRecordPendingCount -= pendingRecordCount;
             recordPendingCountPerCheckpoint.remove(currentlyProcessedCheckpointId);
         }
-        if (!recordsAlreadyProcessed.isEmpty()){
+        if (recordsAlreadyProcessed.isEmpty()) {
             LOGGER.debug("Nothing to store for checkpoint: {} or less", checkpointId);
         }
     }
