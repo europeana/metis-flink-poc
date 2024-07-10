@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecord, DataPartition> {
 
@@ -132,7 +133,9 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     @Override
     public CompletableFuture<Void> isAvailable() {
-        LOGGER.debug("Reader availability state: {} ", readerAvailable.state());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Reader availability state: {} ", readerAvailable.state() == Future.State.SUCCESS ? "Not Blocked" : "Blocked");
+        }
         return readerAvailable;
     }
 
