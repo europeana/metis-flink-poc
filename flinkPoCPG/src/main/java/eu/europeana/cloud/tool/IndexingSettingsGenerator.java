@@ -1,5 +1,6 @@
 package eu.europeana.cloud.tool;
 
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.indexing.IndexingSettings;
 import eu.europeana.indexing.exception.IndexingException;
 import eu.europeana.indexing.exception.SetupRelatedIndexingException;

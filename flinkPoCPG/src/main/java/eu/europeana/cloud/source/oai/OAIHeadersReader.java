@@ -1,8 +1,8 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
-import static eu.europeana.cloud.tool.JobParamName.METADATA_PREFIX;
-import static eu.europeana.cloud.tool.JobParamName.OAI_REPOSITORY_URL;
-import static eu.europeana.cloud.tool.JobParamName.SET_SPEC;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.METADATA_PREFIX;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.SET_SPEC;
 
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;
@@ -29,7 +29,11 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   private final SourceReaderContext context;
   private final ParameterTool parameterTool;
   private boolean active;
+
   private CompletableFuture<Void> available = new CompletableFuture<>();
+  private boolean completed;
+  private OaiHarvester harvester;
+  private OaiHarvest oaiHarvest;
 
   public OAIHeadersReader(SourceReaderContext context, ParameterTool parameterTool) {
     this.context = context;
@@ -40,10 +44,19 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
   @Override
   public void start() {
     LOGGER.info("Started oai reader.");
+    harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
+    oaiHarvest = new OaiHarvest(
+        parameterTool.getRequired(OAI_REPOSITORY_URL),
+        parameterTool.getRequired(METADATA_PREFIX),
+        parameterTool.getRequired(SET_SPEC));
   }
 
   @Override
   public InputStatus pollNext(ReaderOutput<OaiRecordHeader> output) throws Exception {
+    if (completed) {
+      LOGGER.info("Poll on completed OAI source.");
+      return InputStatus.END_OF_INPUT;
+    }
     LOGGER.info("Executed poll: active: {}", active);
     if (!active) {
       available = new CompletableFuture<>();
@@ -51,12 +64,6 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
       return InputStatus.NOTHING_AVAILABLE;
     }
 
-    OaiHarvester harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
-
-    OaiHarvest oaiHarvest = new OaiHarvest(
-        parameterTool.getRequired(OAI_REPOSITORY_URL),
-        parameterTool.getRequired(METADATA_PREFIX),
-        parameterTool.getRequired(SET_SPEC));
     OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(oaiHarvest);
     headerIterator.forEach(oaiHeader -> {
       output.collect(oaiHeader);
@@ -64,7 +71,10 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
     });
     headerIterator.close();
     active = false;
-    available = new CompletableFuture<>();
+    available = CompletableFuture.completedFuture(null);
+    completed=true;
+
+    LOGGER.info("Completed OAI source.");
     return InputStatus.END_OF_INPUT;
   }
 
@@ -95,7 +105,7 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
 
   @Override
   public void close() throws Exception {
-    LOGGER.info("close");
+    LOGGER.info("OAI - close");
     //No needed for now
   }
 }

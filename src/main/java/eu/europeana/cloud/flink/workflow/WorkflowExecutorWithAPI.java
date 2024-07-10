@@ -9,7 +9,8 @@ import static eu.europeana.cloud.flink.common.JobsParametersConstants.SET_SPEC;
 import static eu.europeana.cloud.flink.common.utils.JobUtils.readProperties;
 
 import com.datastax.driver.core.utils.UUIDs;
-import eu.europeana.cloud.flink.workflow.entities.SubmitJobRequest;
+import eu.europeana.cloud.flink.client.JobExecutor;
+import eu.europeana.cloud.flink.client.entities.SubmitJobRequest;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import java.io.IOException;
 import java.util.Properties;

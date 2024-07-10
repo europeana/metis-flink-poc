@@ -1,22 +1,25 @@
 package eu.europeana.cloud.tool;
 
 
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 
-public class DbConnection implements Serializable {
+public class DbConnectionProvider implements Serializable {
 
-    private transient Connection connection;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DbConnectionProvider.class);
+
     private final String url;
     private final String user;
     private final String password;
 
 
-    public DbConnection(ParameterTool parameterTool) {
+    public DbConnectionProvider(ParameterTool parameterTool) {
         this.url = parameterTool.getRequired(JobParamName.DATASOURCE_URL);
         this.user = parameterTool.get(JobParamName.DATASOURCE_USERNAME);
         this.password = parameterTool.get(JobParamName.DATASOURCE_PASSWORD);
@@ -24,22 +27,12 @@ public class DbConnection implements Serializable {
 
     public Connection getConnection() {
         try {
-            Class.forName("org.postgresql.Driver");
-            connection = DriverManager
+            return DriverManager
                     .getConnection(url, user, password);
-            return connection;
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            LOGGER.error("Could not connect to PostgreSQL database", e);
             System.exit(0);
         }
         return null;
-    }
-    public void close() {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

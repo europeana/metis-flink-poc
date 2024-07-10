@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.harvest;
+package eu.europeana.cloud.operator;
 
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import org.apache.flink.api.common.functions.FilterFunction;

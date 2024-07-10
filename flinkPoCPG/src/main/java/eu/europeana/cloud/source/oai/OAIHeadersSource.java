@@ -1,4 +1,4 @@
-package eu.europeana.cloud.oai.source;
+package eu.europeana.cloud.source.oai;
 
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
 import java.io.IOException;
@@ -13,7 +13,8 @@ import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>, ResultTypeQueryable<OaiRecordHeader> {
+public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, OAIEnumeratorState>,
+    ResultTypeQueryable<OaiRecordHeader> {
 
 
   private final ParameterTool parameterTool;
@@ -29,9 +30,9 @@ public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>
   }
 
   @Override
-  public SplitEnumerator<OAISplit, Void> createEnumerator(
+  public SplitEnumerator<OAISplit, OAIEnumeratorState> createEnumerator(
       SplitEnumeratorContext<OAISplit> enumContext) throws Exception {
-    return new OAIHeadersSplitEnumerator(enumContext);
+    return new OAIHeadersSplitEnumerator(enumContext, null);
   }
 
   @Override
@@ -40,9 +41,10 @@ public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>
   }
 
   @Override
-  public SplitEnumerator<OAISplit, Void> restoreEnumerator(SplitEnumeratorContext<OAISplit> enumContext, Void checkpoint)
+  public SplitEnumerator<OAISplit, OAIEnumeratorState> restoreEnumerator(SplitEnumeratorContext<OAISplit> enumContext,
+      OAIEnumeratorState checkpoint)
       throws Exception {
-    return new OAIHeadersSplitEnumerator(enumContext);
+    return new OAIHeadersSplitEnumerator(enumContext, checkpoint);
   }
 
   @Override
@@ -67,8 +69,8 @@ public class OAIHeadersSource implements Source<OaiRecordHeader, OAISplit, Void>
   }
 
   @Override
-  public SimpleVersionedSerializer<Void> getEnumeratorCheckpointSerializer() {
-    return null;
+  public SimpleVersionedSerializer<OAIEnumeratorState> getEnumeratorCheckpointSerializer() {
+    return new OAIEnumeratorStateSerializer();
   }
 
 

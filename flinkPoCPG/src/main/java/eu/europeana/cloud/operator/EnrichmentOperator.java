@@ -2,8 +2,8 @@ package eu.europeana.cloud.operator;
 
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
-import eu.europeana.cloud.tool.JobName;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.enrichment.rest.client.EnrichmentWorker;
 import eu.europeana.enrichment.rest.client.EnrichmentWorkerImpl;
 import eu.europeana.enrichment.rest.client.dereference.DereferencerProvider;

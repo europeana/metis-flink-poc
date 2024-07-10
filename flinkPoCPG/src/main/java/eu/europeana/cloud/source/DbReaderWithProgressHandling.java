@@ -3,12 +3,11 @@ package eu.europeana.cloud.source;
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
-import eu.europeana.cloud.tool.DbConnection;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.tool.DbConnectionProvider;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
@@ -37,7 +36,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private long checkpointId = -1;
     private final long taskId;
 
-    private ResultSet polledRecords = null;
+    private List<ExecutionRecord> polledRecords = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbReaderWithProgressHandling.class);
 
@@ -55,8 +54,8 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     @Override
     public void start() {
         LOGGER.info("Starting source reader");
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
-        taskInfoRepository = new TaskInfoRepository(new DbConnection(parameterTool));
+        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
+        taskInfoRepository = new TaskInfoRepository(new DbConnectionProvider(parameterTool));
     }
 
     @Override
@@ -75,30 +74,17 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
             DataPartition currentSplit = currentSplits.getFirst();
             if (polledRecords == null) {
                 LOGGER.debug("Fetching records from database");
-                try {
-                    polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
-                            parameterTool.get(JobParamName.DATASET_ID),
-                            parameterTool.get(JobParamName.EXECUTION_ID),
-                            currentSplit.offset(), currentSplit.limit());
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+                polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
+                        parameterTool.getRequired(JobParamName.DATASET_ID),
+                        parameterTool.getRequired(JobParamName.EXECUTION_ID),
+                        currentSplit.offset(), currentSplit.limit());
             } else {
                 LOGGER.debug("Already fetched records exist");
             }
 
             boolean isResultSetProcessed = true;
-            while (polledRecords.next()) {
-                ExecutionRecord executionRecord = ExecutionRecord.builder()
-                        .executionRecordKey(
-                                ExecutionRecordKey.builder()
-                                        .datasetId(polledRecords.getString("dataset_id"))
-                                        .executionId(polledRecords.getString("execution_id"))
-                                        .recordId(polledRecords.getString("record_id"))
-                                        .build())
-                        .executionName(polledRecords.getString("execution_name"))
-                        .recordData(new String(polledRecords.getBytes("record_data")))
-                        .build();
+            while (!polledRecords.isEmpty()) {
+                ExecutionRecord executionRecord = polledRecords.getFirst();
                 currentRecordPendingCount++;
                 int currentlyPendingForThisCheckpoint = 1;
                 if (recordPendingCountPerCheckpoint.containsKey(checkpointId)) {

@@ -20,15 +20,13 @@ import eu.europeana.cloud.flink.media.MediaJob;
 import eu.europeana.cloud.flink.normalization.NormalizationJob;
 import eu.europeana.cloud.flink.oai.OAIJob;
 import eu.europeana.cloud.flink.validation.ValidationJob;
-import eu.europeana.cloud.flink.workflow.entities.SubmitJobRequest;
+import eu.europeana.cloud.flink.client.entities.SubmitJobRequest;
 import eu.europeana.cloud.flink.xslt.XsltJob;
 import eu.europeana.cloud.service.dps.metis.indexing.TargetIndexingDatabase;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.api.common.JobExecutionResult;
 
 public class StepFactories {
 

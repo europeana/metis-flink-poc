@@ -5,8 +5,8 @@ import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
-import eu.europeana.cloud.tool.DbConnection;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.tool.DbConnectionProvider;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,8 +44,8 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
     @Override
     public void start() {
         LOGGER.info("Starting DbEnumerator");
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
-        taskInfoRepo = new TaskInfoRepository(new DbConnection(parameterTool));
+        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
+        taskInfoRepo = new TaskInfoRepository(new DbConnectionProvider(parameterTool));
         prepareSplits();
     }
 
@@ -81,9 +80,7 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
     }
 
     @Override
-    public void close() throws IOException {
-        executionRecordRepository.close();
-        taskInfoRepo.close();
+    public void close() {
     }
 
 
@@ -99,7 +96,7 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
             for (long i = taskInfo.writeCount(); i < recordsToBeProcessed; i += chunkSize) {
                 dataPartitions.add(new DataPartition(i, chunkSize));
             }
-        } catch (SQLException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (TaskInfoNotFoundException e) {
             LOGGER.error("Task not found in the database. It should never happen", e);

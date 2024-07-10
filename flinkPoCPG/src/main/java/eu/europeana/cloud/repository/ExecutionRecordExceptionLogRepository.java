@@ -1,25 +1,26 @@
 package eu.europeana.cloud.repository;
 
 import eu.europeana.cloud.model.ExecutionRecordResult;
-import eu.europeana.cloud.tool.DbConnection;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class ExecutionRecordExceptionLogRepository implements DbRepository, Serializable {
 
-    private final DbConnection dbConnection;
+    private final DbConnectionProvider dbConnectionProvider;
 
-    public ExecutionRecordExceptionLogRepository(DbConnection dbConnection) {
-        this.dbConnection = dbConnection;
+    public ExecutionRecordExceptionLogRepository(DbConnectionProvider dbConnectionProvider) {
+        this.dbConnectionProvider = dbConnectionProvider;
     }
 
     public void save(ExecutionRecordResult executionRecordResult) {
-        try {
-            PreparedStatement preparedStatement = dbConnection.getConnection().prepareStatement(
-                    "INSERT INTO \"batch-framework\".execution_record_exception_log (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, exception) VALUES (?,?,?,?,?)");
+        try (Connection con = dbConnectionProvider.getConnection();
+             PreparedStatement preparedStatement = con.prepareStatement(
+                     "INSERT INTO \"batch-framework\".execution_record_exception_log (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, exception) VALUES (?,?,?,?,?)")
+        ) {
 
             preparedStatement.setString(1, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getDatasetId());
             preparedStatement.setString(2, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getExecutionId());
@@ -31,10 +32,5 @@ public class ExecutionRecordExceptionLogRepository implements DbRepository, Seri
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void close() throws IOException {
-        dbConnection.close();
     }
 }

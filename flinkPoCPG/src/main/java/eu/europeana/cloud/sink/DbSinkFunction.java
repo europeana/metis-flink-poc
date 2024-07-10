@@ -3,13 +3,15 @@ package eu.europeana.cloud.sink;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.repository.ExecutionRecordExceptionLogRepository;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
-import eu.europeana.cloud.tool.DbConnection;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Stores processed records in the database
@@ -24,8 +26,8 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
     @Override
     public void open(Configuration parameters) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromMap(getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap());
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
-        executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnection(parameterTool));
+        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
+        executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnectionProvider(parameterTool));
         LOGGER.debug("Opening DbSinkFunction");
     }
 
@@ -43,7 +45,7 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
         return StringUtils.isEmpty(executionRecordResult.getException());
     }
 
-    private void storeProcessedRecord(ExecutionRecordResult executionRecordResult) {
+    private void storeProcessedRecord(ExecutionRecordResult executionRecordResult) throws IOException {
         executionRecordRepository.save(executionRecordResult);
     }
 
