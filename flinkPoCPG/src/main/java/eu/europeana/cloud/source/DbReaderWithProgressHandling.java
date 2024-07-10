@@ -1,13 +1,13 @@
 package eu.europeana.cloud.source;
 
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.tool.DbConnectionProvider;
-import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
@@ -16,8 +16,6 @@ import org.apache.flink.core.io.InputStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -82,9 +80,9 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                 LOGGER.debug("Already fetched records exist");
             }
 
-            boolean isResultSetProcessed = true;
+            boolean arePolledRecordsProcessed = true;
             while (!polledRecords.isEmpty()) {
-                ExecutionRecord executionRecord = polledRecords.getFirst();
+                ExecutionRecord executionRecord = polledRecords.removeFirst();
                 currentRecordPendingCount++;
                 int currentlyPendingForThisCheckpoint = 1;
                 if (recordPendingCountPerCheckpoint.containsKey(checkpointId)) {
@@ -99,18 +97,18 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                 if (currentRecordPendingCount >= maxRecordPending) {
                     LOGGER.debug("Blocking reader due to hitting pending records limit");
                     blockReader();
-                    isResultSetProcessed = false;
+                    arePolledRecordsProcessed = false;
                     break;
                 }
             }
-            if (isResultSetProcessed) {
-                LOGGER.debug("Removing split due to exhaustion of polled result set");
+            if (arePolledRecordsProcessed) {
+                LOGGER.debug("Removing split due to exhaustion of polled record set");
                 currentSplits.removeFirst();
                 splitFetched = false;
                 polledRecords = null;
                 return InputStatus.MORE_AVAILABLE;
             } else {
-                LOGGER.debug("Sending signal about more records being present in polled result set");
+                LOGGER.debug("Sending signal about more records being present in polled record set");
             }
         }
         return InputStatus.NOTHING_AVAILABLE;
