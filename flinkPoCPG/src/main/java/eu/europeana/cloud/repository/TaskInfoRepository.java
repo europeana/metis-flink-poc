@@ -1,8 +1,8 @@
 package eu.europeana.cloud.repository;
 
-import eu.europeana.cloud.tool.DbConnectionProvider;
-import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
+import eu.europeana.cloud.model.TaskInfo;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 
 import java.io.Serializable;
 import java.sql.Connection;
@@ -36,8 +36,11 @@ public class TaskInfoRepository implements DbRepository, Serializable {
 
     public void update(TaskInfo taskInfo) {
         try (Connection con = dbConnectionProvider.getConnection();
+             /*
+             Be aware that approach only works in database supporting atomic updated such as postgresql
+              */
              PreparedStatement preparedStatement = con.prepareStatement(
-                "update \"batch-framework\".task_info SET commit_count=?, write_count=? where task_id = ?")) {
+                     "update \"batch-framework\".task_info SET commit_count=commit_count+?, write_count=write_count+? where task_id = ?")) {
             preparedStatement.setLong(1, taskInfo.commitCount());
             preparedStatement.setLong(2, taskInfo.writeCount());
             preparedStatement.setLong(3, taskInfo.taskId());

@@ -1,6 +1,5 @@
 package eu.europeana.cloud.source;
 
-import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
@@ -158,18 +157,17 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     }
 
-    private void updateProgress(long checkpointId) throws TaskInfoNotFoundException {
+    private void updateProgress(long checkpointId) {
         NavigableMap<Long, Integer> recordsAlreadyProcessed = recordPendingCountPerCheckpoint.headMap(checkpointId, false);
         for (Map.Entry<Long, Integer> entry : recordsAlreadyProcessed.entrySet()) {
             Long currentlyProcessedCheckpointId = entry.getKey();
             Integer pendingRecordCount = entry.getValue();
             LOGGER.debug("Storing task progress for given checkpoint: {} records: {}", currentlyProcessedCheckpointId, pendingRecordCount);
-            TaskInfo taskInfo = taskInfoRepository.get(taskId);
             taskInfoRepository.update(
                     new TaskInfo(
-                            taskInfo.taskId(),
-                            taskInfo.commitCount() + 1,
-                            taskInfo.writeCount() + pendingRecordCount));
+                            taskId,
+                            1,
+                            pendingRecordCount));
             currentRecordPendingCount -= pendingRecordCount;
             recordPendingCountPerCheckpoint.remove(currentlyProcessedCheckpointId);
         }
