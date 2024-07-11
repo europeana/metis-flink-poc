@@ -1,14 +1,15 @@
 package eu.europeana.cloud.common;
 
+import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.sink.DbSinkFunction;
 import eu.europeana.cloud.source.DbSourceWithProgressHandling;
-import eu.europeana.cloud.tool.DbConnection;
-import eu.europeana.cloud.tool.JobParam;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParam;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.tool.validation.JobParamValidatorFactory;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -47,11 +48,17 @@ public abstract class MetisJob {
     }
 
     protected void generateTaskIdIfNeeded() {
-        try (TaskInfoRepository taskInfoRepository = new TaskInfoRepository(new DbConnection(tool))) {
-            if (tool.get(JobParamName.TASK_ID) == null) {
-                long taskId = taskIdGenerator.nextLong();
+        TaskInfoRepository taskInfoRepository = new TaskInfoRepository(new DbConnectionProvider(tool));
+        if (tool.get(JobParamName.TASK_ID) == null) {
+            long taskId = taskIdGenerator.nextLong();
+            taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
+            tool = tool.mergeWith(ParameterTool.fromMap(Map.of(JobParamName.TASK_ID, taskId + "")));
+        } else {
+            long taskId = tool.getLong(JobParamName.TASK_ID);
+            try {
+                taskInfoRepository.get(taskId);
+            } catch (TaskInfoNotFoundException e) {
                 taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
-                tool = tool.mergeWith(ParameterTool.fromMap(Map.of(JobParamName.TASK_ID, taskId + "")));
             }
         }
     }

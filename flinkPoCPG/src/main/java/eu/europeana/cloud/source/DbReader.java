@@ -2,10 +2,9 @@ package eu.europeana.cloud.source;
 
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.model.DataPartition;
-import eu.europeana.cloud.tool.DbConnection;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.ExecutionRecordKey;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
@@ -14,8 +13,6 @@ import org.apache.flink.core.io.InputStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -43,7 +40,7 @@ public class DbReader implements SourceReader<ExecutionRecord, DataPartition> {
     @Override
     public void start() {
         LOGGER.info("Starting source reader");
-        this.executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
+        this.executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
     }
 
     @Override
@@ -61,28 +58,15 @@ public class DbReader implements SourceReader<ExecutionRecord, DataPartition> {
         if (!currentSplits.isEmpty()) {
             DataPartition currentSplit = currentSplits.removeFirst();
 
-            try {
-                ResultSet records = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
-                        parameterTool.getRequired(JobParamName.DATASET_ID),
-                        parameterTool.getRequired(JobParamName.EXECUTION_ID),
-                        currentSplit.offset(), currentSplit.limit());
-                while (records.next()) {
-                    ExecutionRecord executionRecord = ExecutionRecord.builder()
-                            .executionRecordKey(
-                                    ExecutionRecordKey.builder()
-                                            .datasetId(records.getString("dataset_id"))
-                                            .executionId(records.getString("execution_id"))
-                                            .recordId(records.getString("record_id"))
-                                            .build())
-                            .executionName(records.getString("execution_name"))
-                            .recordData(new String(records.getBytes("record_data")))
-                            .build();
-                    LOGGER.info("Emitting record {}", executionRecord.getExecutionRecordKey().getRecordId());
-                    output.collect(executionRecord);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            List<ExecutionRecord> results = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
+                    parameterTool.getRequired(JobParamName.DATASET_ID),
+                    parameterTool.getRequired(JobParamName.EXECUTION_ID),
+                    currentSplit.offset(), currentSplit.limit());
+
+            results.forEach(result -> {
+                LOGGER.info("Emitting record {}", result.getExecutionRecordKey().getRecordId());
+                output.collect(result);
+            });
             currentSplits = new ArrayList<>();
             splitFetched = false;
         }

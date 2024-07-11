@@ -1,8 +1,8 @@
 package eu.europeana.cloud.source.oai;
 
-import static eu.europeana.cloud.tool.JobParamName.METADATA_PREFIX;
-import static eu.europeana.cloud.tool.JobParamName.OAI_REPOSITORY_URL;
-import static eu.europeana.cloud.tool.JobParamName.SET_SPEC;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.METADATA_PREFIX;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.OAI_REPOSITORY_URL;
+import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.SET_SPEC;
 
 import eu.europeana.metis.harvesting.HarvesterFactory;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;

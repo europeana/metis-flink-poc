@@ -9,9 +9,9 @@ import eu.europeana.cloud.operator.RecordHarvestingOperator;
 import eu.europeana.cloud.source.oai.OAIHeadersSource;
 
 import eu.europeana.cloud.sink.DbSinkFunction;
-import eu.europeana.cloud.tool.JobName;
-import eu.europeana.cloud.tool.JobParam;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParam;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;

@@ -1,24 +1,26 @@
 package eu.europeana.cloud.repository;
 
-import eu.europeana.cloud.tool.DbConnection;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 
 import java.io.Serializable;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class TaskInfoRepository implements DbRepository, Serializable {
 
-    private final DbConnection dbConnection;
+    private final DbConnectionProvider dbConnectionProvider;
 
-    public TaskInfoRepository(DbConnection dbConnection) {
-        this.dbConnection = dbConnection;
+    public TaskInfoRepository(DbConnectionProvider dbConnectionProvider) {
+        this.dbConnectionProvider = dbConnectionProvider;
     }
 
     public void save(TaskInfo taskInfo) {
-        try (PreparedStatement preparedStatement = dbConnection.getConnection().prepareStatement(
+        try (Connection con = dbConnectionProvider.getConnection();
+             PreparedStatement preparedStatement = con.prepareStatement(
                 "INSERT INTO \"batch-framework\".task_info (TASK_ID,COMMIT_COUNT,WRITE_COUNT) VALUES (?,?,?)")) {
             preparedStatement.setLong(1, taskInfo.taskId());
             preparedStatement.setLong(2, taskInfo.commitCount());
@@ -33,7 +35,8 @@ public class TaskInfoRepository implements DbRepository, Serializable {
 
 
     public void update(TaskInfo taskInfo) {
-        try (PreparedStatement preparedStatement = dbConnection.getConnection().prepareStatement(
+        try (Connection con = dbConnectionProvider.getConnection();
+             PreparedStatement preparedStatement = con.prepareStatement(
                 "update \"batch-framework\".task_info SET commit_count=?, write_count=? where task_id = ?")) {
             preparedStatement.setLong(1, taskInfo.commitCount());
             preparedStatement.setLong(2, taskInfo.writeCount());
@@ -46,10 +49,9 @@ public class TaskInfoRepository implements DbRepository, Serializable {
         }
     }
 
-
-
     public TaskInfo get(long taskId) throws TaskInfoNotFoundException {
-        try (PreparedStatement preparedStatement = dbConnection.getConnection().prepareStatement(
+        try (Connection con = dbConnectionProvider.getConnection();
+             PreparedStatement preparedStatement = con.prepareStatement(
                 "SELECT * FROM \"batch-framework\".task_info WHERE TASK_ID = ?")) {
             preparedStatement.setLong(1, taskId);
 
@@ -64,15 +66,10 @@ public class TaskInfoRepository implements DbRepository, Serializable {
 
                 );
             } else {
-                throw new TaskInfoNotFoundException();
+                throw new TaskInfoNotFoundException(taskId);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void close() {
-        dbConnection.close();
     }
 }

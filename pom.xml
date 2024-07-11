@@ -194,9 +194,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-
-
         <dependency>
             <groupId>eu.europeana.metis</groupId>
             <artifactId>metis-normalization</artifactId>
@@ -497,6 +494,11 @@
             <groupId>eu.europeana.cloud.flink</groupId>
             <artifactId>flink-poc-client</artifactId>
             <version>1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>flinkPoCPG</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

@@ -2,8 +2,8 @@ package eu.europeana.cloud.operator;
 
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
-import eu.europeana.cloud.tool.JobName;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.metis.transformation.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.utils.ParameterTool;

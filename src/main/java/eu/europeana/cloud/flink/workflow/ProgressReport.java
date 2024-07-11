@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import eu.europeana.cloud.repository.ExecutionRecordExceptionLogRepository;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
-import eu.europeana.cloud.tool.DbConnection;
+import eu.europeana.cloud.tool.DbConnectionProvider;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +51,9 @@ public class ProgressReport {
   private static void printProgress(String datasetId, String sourceExecutionId,
       String targetExecutionId, ParameterTool parameterTool) {
 
-    try (ExecutionRecordRepository executionRecordRepository = new ExecutionRecordRepository(new DbConnection(parameterTool));
-         ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnection(parameterTool))) {
+    try {
+      ExecutionRecordRepository executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
+      ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnectionProvider(parameterTool));
       final long sourceTotal = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);
       final long processedSuccess = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, targetExecutionId);
       final long processedException = executionRecordExceptionLogRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);
@@ -60,7 +61,7 @@ public class ProgressReport {
       LOGGER.info(
               format("Task progress - Processed/SourceTotal: %s/%s, Exceptions: %s", processed, sourceTotal, processedException));
 
-    } catch (Exception e) {
+    } catch (IOException e) {
       LOGGER.error("Unable to read progress", e);
     }
   }

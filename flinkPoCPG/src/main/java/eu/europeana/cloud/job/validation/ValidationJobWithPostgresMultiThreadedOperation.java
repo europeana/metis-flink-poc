@@ -4,7 +4,7 @@ import eu.europeana.cloud.common.MetisJob;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.operator.ValidationOperator;
-import eu.europeana.cloud.tool.JobName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,10 +1,9 @@
 package eu.europeana.cloud.operator;
 
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.ExecutionRecordResult;
-import eu.europeana.cloud.tool.JobName;
-import eu.europeana.cloud.tool.JobParamName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.metis.mediaprocessing.*;
 import eu.europeana.metis.mediaprocessing.exception.MediaExtractionException;
 import eu.europeana.metis.mediaprocessing.exception.RdfDeserializationException;
