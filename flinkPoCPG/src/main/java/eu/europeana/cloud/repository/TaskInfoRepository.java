@@ -33,14 +33,10 @@ public class TaskInfoRepository implements DbRepository, Serializable {
         }
     }
 
-
     public void update(TaskInfo taskInfo) {
         try (Connection con = dbConnectionProvider.getConnection();
-             /*
-             Be aware that approach only works in database supporting atomic updated such as postgresql
-              */
              PreparedStatement preparedStatement = con.prepareStatement(
-                     "update \"batch-framework\".task_info SET commit_count=commit_count+?, write_count=write_count+? where task_id = ?")) {
+                     "update \"batch-framework\".task_info SET commit_count=?, write_count=? where task_id = ?")) {
             preparedStatement.setLong(1, taskInfo.commitCount());
             preparedStatement.setLong(2, taskInfo.writeCount());
             preparedStatement.setLong(3, taskInfo.taskId());
@@ -52,10 +48,27 @@ public class TaskInfoRepository implements DbRepository, Serializable {
         }
     }
 
+    public void incrementWriteCount(long taskId, long writeCountIncrement) {
+        try (Connection con = dbConnectionProvider.getConnection();
+             /*
+             Be aware that approach only works in database supporting atomic updated such as postgresql
+              */
+             PreparedStatement preparedStatement = con.prepareStatement(
+                     "update \"batch-framework\".task_info SET commit_count=commit_count+1, write_count=write_count+? where task_id = ?")) {
+            preparedStatement.setLong(1, writeCountIncrement);
+            preparedStatement.setLong(2, taskId);
+
+            preparedStatement.execute();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public TaskInfo get(long taskId) throws TaskInfoNotFoundException {
         try (Connection con = dbConnectionProvider.getConnection();
              PreparedStatement preparedStatement = con.prepareStatement(
-                "SELECT * FROM \"batch-framework\".task_info WHERE TASK_ID = ?")) {
+                     "SELECT * FROM \"batch-framework\".task_info WHERE TASK_ID = ?")) {
             preparedStatement.setLong(1, taskId);
 
 

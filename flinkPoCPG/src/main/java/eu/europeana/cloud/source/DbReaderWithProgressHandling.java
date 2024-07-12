@@ -3,7 +3,6 @@ package eu.europeana.cloud.source;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
-import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.tool.DbConnectionProvider;
@@ -18,9 +17,11 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecord, DataPartition> {
 
+    private static final long INITIAL_CHECKPOINT_ID = -1;
     private final SourceReaderContext context;
     private final ParameterTool parameterTool;
     private ExecutionRecordRepository executionRecordRepository;
@@ -31,7 +32,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private final TreeMap<Long, Integer> recordPendingCountPerCheckpoint = new TreeMap<>();
     private boolean splitFetched = false;
     private boolean noMoreSplits = false;
-    private long checkpointId = -1;
+    private long currentCheckpointId = INITIAL_CHECKPOINT_ID;
     private final long taskId;
 
     private List<ExecutionRecord> polledRecords = null;
@@ -80,28 +81,9 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                 LOGGER.debug("Already fetched records exist");
             }
 
-            boolean arePolledRecordsProcessed = true;
-            while (!polledRecords.isEmpty()) {
-                ExecutionRecord executionRecord = polledRecords.removeFirst();
-                currentRecordPendingCount++;
-                int currentlyPendingForThisCheckpoint = 1;
-                if (recordPendingCountPerCheckpoint.containsKey(checkpointId)) {
-                    currentlyPendingForThisCheckpoint = recordPendingCountPerCheckpoint.get(checkpointId);
-                    recordPendingCountPerCheckpoint.put(checkpointId, ++currentlyPendingForThisCheckpoint);
-                } else {
-                    recordPendingCountPerCheckpoint.put(checkpointId, currentlyPendingForThisCheckpoint);
-                }
-                LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
-                LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, checkpointId);
-                output.collect(executionRecord);
-                if (currentRecordPendingCount >= maxRecordPending) {
-                    LOGGER.debug("Blocking reader due to hitting pending records limit");
-                    blockReader();
-                    arePolledRecordsProcessed = false;
-                    break;
-                }
-            }
-            if (arePolledRecordsProcessed) {
+            boolean ifPolledRecordsExhausted = handlePolledRecords(output);
+
+            if (ifPolledRecordsExhausted) {
                 LOGGER.debug("Removing split due to exhaustion of polled record set");
                 currentSplits.removeFirst();
                 splitFetched = false;
@@ -114,8 +96,33 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         return InputStatus.NOTHING_AVAILABLE;
     }
 
+    private boolean handlePolledRecords(ReaderOutput<ExecutionRecord> output) {
+        boolean ifPolledRecordsExhausted = true;
+        while (!polledRecords.isEmpty()) {
+            ExecutionRecord executionRecord = polledRecords.removeFirst();
+            currentRecordPendingCount++;
+            int currentlyPendingForThisCheckpoint = 1;
+            if (recordPendingCountPerCheckpoint.containsKey(currentCheckpointId)) {
+                currentlyPendingForThisCheckpoint = recordPendingCountPerCheckpoint.get(currentCheckpointId);
+                recordPendingCountPerCheckpoint.put(currentCheckpointId, ++currentlyPendingForThisCheckpoint);
+            } else {
+                recordPendingCountPerCheckpoint.put(currentCheckpointId, currentlyPendingForThisCheckpoint);
+            }
+            LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
+            LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, currentCheckpointId);
+            output.collect(executionRecord);
+            if (currentRecordPendingCount >= maxRecordPending) {
+                LOGGER.debug("Blocking reader due to hitting pending records limit");
+                blockReader();
+                ifPolledRecordsExhausted = false;
+                break;
+            }
+        }
+        return ifPolledRecordsExhausted;
+    }
+
     @Override
-    public void notifyCheckpointComplete(long checkpointId) throws Exception {
+    public void notifyCheckpointComplete(long checkpointId) {
         LOGGER.debug("Checkpoint successfully finished on flink with id: {}", checkpointId);
         updateProgress(checkpointId);
         if (currentRecordPendingCount < maxRecordPending) {
@@ -125,8 +132,8 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     @Override
     public List<DataPartition> snapshotState(long checkpointId) {
-        LOGGER.debug("Storing snapshot for checkpoint with id: {}", this.checkpointId);
-        this.checkpointId = checkpointId;
+        LOGGER.debug("Storing snapshot for checkpoint with id: {}", checkpointId);
+        this.currentCheckpointId = checkpointId;
         return List.of();
     }
 
@@ -158,22 +165,24 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     }
 
     private void updateProgress(long checkpointId) {
-        NavigableMap<Long, Integer> recordsAlreadyProcessed = recordPendingCountPerCheckpoint.headMap(checkpointId, false);
-        for (Map.Entry<Long, Integer> entry : recordsAlreadyProcessed.entrySet()) {
-            Long currentlyProcessedCheckpointId = entry.getKey();
-            Integer pendingRecordCount = entry.getValue();
-            LOGGER.debug("Storing task progress for given checkpoint: {} records: {}", currentlyProcessedCheckpointId, pendingRecordCount);
-            taskInfoRepository.update(
-                    new TaskInfo(
-                            taskId,
-                            1,
-                            pendingRecordCount));
-            currentRecordPendingCount -= pendingRecordCount;
-            recordPendingCountPerCheckpoint.remove(currentlyProcessedCheckpointId);
+        Set<Map.Entry<Long, Integer>> alreadyCommittedCheckpointSet = recordPendingCountPerCheckpoint.headMap(checkpointId, false).entrySet();
+
+        long committedRecordPendingCount = alreadyCommittedCheckpointSet
+                .stream().map(Map.Entry::getValue)
+                .reduce(0, Integer::sum);
+        Set<Long> committedCheckpoints = alreadyCommittedCheckpointSet
+                .stream().map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        if (committedRecordPendingCount > 0) {
+            LOGGER.debug("Storing progress for task with id: {} for checkpoints with ids: {} and total of records: {}", taskId, committedCheckpoints, committedRecordPendingCount);
+            taskInfoRepository.incrementWriteCount(
+                    taskId,
+                    committedRecordPendingCount);
+            currentRecordPendingCount -= committedRecordPendingCount;
+        } else {
+            LOGGER.debug("Nothing to store for checkpoint with id: {} or less", checkpointId);
         }
-        if (recordsAlreadyProcessed.isEmpty()) {
-            LOGGER.debug("Nothing to store for checkpoint: {} or less", checkpointId);
-        }
+        recordPendingCountPerCheckpoint.keySet().removeAll(committedCheckpoints);
     }
 
     private void blockReader() {
