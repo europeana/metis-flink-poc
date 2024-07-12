@@ -3,6 +3,8 @@ package eu.europeana.cloud.flink.client.constants.postgres;
 public class JobParamName {
 
     public static final String OPERATOR_PARALLELISM = "OPERATOR_PARALLELISM";
+    public static final String READER_PARALLELISM = "READER_PARALLELISM";
+    public static final String SINK_PARALLELISM = "SINK_PARALLELISM";
     public static final String TASK_ID = "taskId";
     public static final String MAX_RECORD_PENDING = "maxRecordPending";
     public static final String VALIDATION_TYPE = "validationType";

@@ -1,5 +1,6 @@
 package eu.europeana.cloud.source;
 
+import eu.europeana.cloud.flink.client.constants.postgres.JobParam;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
@@ -47,7 +48,10 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         this.context = context;
         this.parameterTool = parameterTool;
         taskId = parameterTool.getLong(JobParamName.TASK_ID);
-        maxRecordPending = parameterTool.has(JobParamName.MAX_RECORD_PENDING) ? parameterTool.getInt(JobParamName.MAX_RECORD_PENDING) : 100;
+        maxRecordPending = parameterTool.
+                getInt(
+                        JobParamName.MAX_RECORD_PENDING,
+                        JobParam.DEFAULT_READER_MAX_RECORD_PENDING_COUNT);
     }
 
     @Override

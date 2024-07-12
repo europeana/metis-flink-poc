@@ -1,14 +1,14 @@
 package eu.europeana.cloud.common;
 
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParam;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.sink.DbSinkFunction;
 import eu.europeana.cloud.source.DbSourceWithProgressHandling;
-import eu.europeana.cloud.flink.client.constants.postgres.JobParam;
-import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.tool.validation.JobParamValidatorFactory;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -64,14 +64,22 @@ public abstract class MetisJob {
     }
 
     protected void prepareJob() {
-        flinkEnvironment.fromSource(
-                        new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), createSourceName()
-                ).setParallelism(1)
-                .process(getMainOperator()).setParallelism(
+        flinkEnvironment
+                .fromSource(new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), createSourceName())
+                .setParallelism(
+                        tool.getInt(
+                                JobParamName.READER_PARALLELISM,
+                                JobParam.DEFAULT_READER_PARALLELISM))
+                .process(getMainOperator())
+                .setParallelism(
                         tool.getInt(
                                 JobParamName.OPERATOR_PARALLELISM,
                                 JobParam.DEFAULT_OPERATOR_PARALLELISM))
-                .addSink(new DbSinkFunction()).setParallelism(1);
+                .addSink(new DbSinkFunction())
+                .setParallelism(
+                        tool.getInt(
+                                JobParamName.SINK_PARALLELISM,
+                                JobParam.DEFAULT_SINK_PARALLELISM));
     }
 
     public void execute() throws Exception {
