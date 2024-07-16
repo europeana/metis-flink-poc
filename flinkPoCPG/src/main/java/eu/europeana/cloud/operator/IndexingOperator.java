@@ -1,5 +1,6 @@
 package eu.europeana.cloud.operator;
 
+import eu.europeana.cloud.flink.client.constants.postgres.JobName;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 
@@ -26,10 +27,13 @@ public class IndexingOperator extends ProcessFunction<ExecutionRecord, Execution
     private Date recordDate;
     private boolean preserveTimestamps;
     private boolean performRedirect;
+    private ParameterTool parameterTool;
+    private long taskId;
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        ParameterTool parameterTool = ParameterTool.fromMap(getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap());
+        parameterTool = ParameterTool.fromMap(getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap());
+        taskId = parameterTool.getLong(JobParamName.TASK_ID);
         indexingSettings = prepareIndexingSetting(parameterTool);
         recordDate = new Date();
         preserveTimestamps = parameterTool.getBoolean(JobParamName.INDEXING_PRESERVETIMESTAMPS);
@@ -52,6 +56,7 @@ public class IndexingOperator extends ProcessFunction<ExecutionRecord, Execution
             LOGGER.info("Indexing: {}", sourceExecutionRecord.getExecutionRecordKey().getRecordId());
             indexer.index(sourceExecutionRecord.getRecordData(), properties, tier -> true);
             LOGGER.info("Indexed: {}", sourceExecutionRecord.getExecutionRecordKey().getRecordId());
+            out.collect(ExecutionRecordResult.from(sourceExecutionRecord, taskId, parameterTool.get(JobName.INDEXING)));
         }
     }
 }

@@ -63,11 +63,10 @@ public class ValidationOperator extends ProcessFunction<ExecutionRecord, Executi
     }
 
     private ExecutionRecordResult prepareResultRecord(ExecutionRecord sourceRecord) {
-        ExecutionRecordResult resultRecord = ExecutionRecordResult.from(sourceRecord);
-        resultRecord.getExecutionRecord().getExecutionRecordKey().setExecutionId(taskId + "");
-        resultRecord.getExecutionRecord().setExecutionName(parameterTool.get(JobParamName.VALIDATION_TYPE));
-        return resultRecord;
+      return ExecutionRecordResult.from(sourceRecord, taskId, parameterTool.get(JobParamName.VALIDATION_TYPE));
     }
+
+
 
     private void reorderFileContent(ExecutionRecordResult executionRecordResult) throws TransformationException {
         LOGGER.debug("Reordering the file");

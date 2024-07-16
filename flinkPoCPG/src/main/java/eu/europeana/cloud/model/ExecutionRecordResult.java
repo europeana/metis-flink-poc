@@ -32,6 +32,13 @@ public class ExecutionRecordResult {
                 .build();
     }
 
+    public static ExecutionRecordResult from(ExecutionRecord sourceRecord, long taskId, String stepName) {
+        ExecutionRecordResult resultRecord = ExecutionRecordResult.from(sourceRecord);
+        resultRecord.getExecutionRecord().getExecutionRecordKey().setExecutionId(taskId + "");
+        resultRecord.getExecutionRecord().setExecutionName(stepName);
+        return resultRecord;
+    }
+
     public static ExecutionRecordResult from(
             ExecutionRecord executionRecord,
             String executionId,

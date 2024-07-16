@@ -1,10 +1,11 @@
 package eu.europeana.cloud.job.validation;
 
 import eu.europeana.cloud.common.MetisJob;
+import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.operator.ValidationOperator;
-import eu.europeana.cloud.flink.client.constants.postgres.JobName;
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,7 @@ public class ValidationJobWithPostgresMultiThreadedOperation extends MetisJob {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationJobWithPostgresMultiThreadedOperation.class);
 
     protected ValidationJobWithPostgresMultiThreadedOperation(String[] args) {
-        super(args, JobName.VALIDATION_EXTERNAL);
+        super(args, ParameterTool.fromArgs(args).getRequired(JobParamName.VALIDATION_TYPE));
     }
 
     public static void main(String[] args) throws Exception {
