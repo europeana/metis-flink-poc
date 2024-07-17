@@ -4,6 +4,7 @@ import eu.europeana.cloud.flink.client.entities.JobDetails;
 import eu.europeana.cloud.flink.client.entities.SubmitJobRequest;
 import eu.europeana.cloud.flink.client.entities.SubmitJobResponse;
 import java.util.Properties;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.AbstractEnvironment;
@@ -15,6 +16,11 @@ import org.springframework.web.client.RestTemplate;
 public class JobExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JobExecutor.class);
+  private static final String STATE_FINISHED = "FINISHED";
+  private static final String STATE_CANCELED = "CANCELED";
+  private static final String STATE_FAILED = "FAILED";
+  private static final Set<String> END_STATES = Set.of(STATE_FINISHED, STATE_FAILED, STATE_CANCELED);
+
 
   private final String jarId;
   private final RestTemplate restTemplate;
@@ -54,8 +60,12 @@ public class JobExecutor {
       if (++i % 5 == 0) {
         LOGGER.info("Progress: {}", details);
       }
-    } while (!(details.getState().equals("FINISHED") || details.getState().equals("CANCELED")));
+    } while (!END_STATES.contains(details.getState()));
     System.out.println("");
+    if(!details.getState().equals(STATE_FINISHED)) {
+      throw new RuntimeException("Job execution finished with state: " + details.getState());
+    }
+
     LOGGER.info("Job finished! Details: {}", details);
   }
 
