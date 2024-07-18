@@ -38,16 +38,13 @@ public class OAIJob extends MetisJob {
 
     @Override
     protected void prepareJob() {
-        int parallelism = tool.getInt(
-            JobParamName.OPERATOR_PARALLELISM,
-            JobParam.DEFAULT_OPERATOR_PARALLELISM);
         flinkEnvironment.fromSource(
             new OAIHeadersSource(tool), WatermarkStrategy.noWatermarks(), createSourceName()).setParallelism(1)
 
-        .filter(new DeletedRecordFilter()).setParallelism(parallelism)
-        .process(new RecordHarvestingOperator(tool)).setParallelism(parallelism)
-        .process(new IdAssigningOperator()).setParallelism(parallelism)
-                        .addSink(new DbSinkFunction()).setParallelism(1);
+        .filter(new DeletedRecordFilter()).setParallelism(operatorParallelism)
+        .process(new RecordHarvestingOperator(tool)).setParallelism(operatorParallelism)
+        .process(new IdAssigningOperator()).setParallelism(operatorParallelism)
+                        .addSink(new DbSinkFunction()).setParallelism(sinkParallelism);
     }
 
     public static void main(String[] args) throws Exception {

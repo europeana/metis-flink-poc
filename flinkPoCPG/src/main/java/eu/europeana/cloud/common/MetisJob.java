@@ -25,10 +25,16 @@ public abstract class MetisJob {
     protected String jobName;
     protected ParameterTool tool;
     private final Random taskIdGenerator = new Random();
+    protected final int readerParallelism;
+    protected final int operatorParallelism;
+    protected final int sinkParallelism;
 
     protected MetisJob(String[] args, String jobName) {
         this.jobName = jobName;
         tool = ParameterTool.fromArgs(args);
+        readerParallelism = tool.getInt(JobParamName.READER_PARALLELISM, JobParam.DEFAULT_READER_PARALLELISM);
+        operatorParallelism = tool.getInt(JobParamName.OPERATOR_PARALLELISM, JobParam.DEFAULT_OPERATOR_PARALLELISM);
+        sinkParallelism = tool.getInt(JobParamName.SINK_PARALLELISM, JobParam.DEFAULT_SINK_PARALLELISM);
         flinkEnvironment = prepareEnvironment();
     }
 
@@ -65,21 +71,10 @@ public abstract class MetisJob {
 
     protected void prepareJob() {
         flinkEnvironment
-                .fromSource(new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), createSourceName())
-                .setParallelism(
-                        tool.getInt(
-                                JobParamName.READER_PARALLELISM,
-                                JobParam.DEFAULT_READER_PARALLELISM))
-                .process(getMainOperator())
-                .setParallelism(
-                        tool.getInt(
-                                JobParamName.OPERATOR_PARALLELISM,
-                                JobParam.DEFAULT_OPERATOR_PARALLELISM))
-                .addSink(new DbSinkFunction())
-                .setParallelism(
-                        tool.getInt(
-                                JobParamName.SINK_PARALLELISM,
-                                JobParam.DEFAULT_SINK_PARALLELISM));
+            .fromSource(new DbSourceWithProgressHandling(tool), WatermarkStrategy.noWatermarks(), createSourceName())
+            .setParallelism(readerParallelism)
+            .process(getMainOperator()).setParallelism(operatorParallelism)
+            .addSink(new DbSinkFunction()).setParallelism(sinkParallelism);
     }
 
     public void execute() throws Exception {
