@@ -23,7 +23,7 @@ public class ProgressReport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     final String jobId = "171de25fe70bf53dff625d545aed6eac";
     final String datasetId = "1";
     final String providedSourceExecutionId = "5b4afb60-27d6-11ef-b3e7-3fe03a920947";
@@ -41,19 +41,22 @@ public class ProgressReport {
       sourceExecutionId = providedSourceExecutionId;
     }
 
-    await().forever().until(() -> {
-      final JobDetails jobDetailsInternal = jobExecutor.getProgress(jobId);
-      printProgress(datasetId, sourceExecutionId, targetExecutionId, parameterTool);
-      return jobDetailsInternal.getState().equals("FINISHED");
-    });
+    try(DbConnectionProvider dbConnectionProvider = new DbConnectionProvider(parameterTool)) {
+      await().forever().until(() -> {
+        final JobDetails jobDetailsInternal = jobExecutor.getProgress(jobId);
+        printProgress(datasetId, sourceExecutionId, targetExecutionId, dbConnectionProvider);
+        return jobDetailsInternal.getState().equals("FINISHED");
+      });
+    }
   }
 
   private static void printProgress(String datasetId, String sourceExecutionId,
-      String targetExecutionId, ParameterTool parameterTool) {
+      String targetExecutionId, DbConnectionProvider dbConnectionProvider) {
 
     try {
-      ExecutionRecordRepository executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
-      ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnectionProvider(parameterTool));
+      ExecutionRecordRepository executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
+      ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository =
+          new ExecutionRecordExceptionLogRepository(dbConnectionProvider);
       final long sourceTotal = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);
       final long processedSuccess = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, targetExecutionId);
       final long processedException = executionRecordExceptionLogRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);

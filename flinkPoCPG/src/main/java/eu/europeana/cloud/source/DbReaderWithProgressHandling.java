@@ -41,6 +41,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private static final Logger LOGGER = LoggerFactory.getLogger(DbReaderWithProgressHandling.class);
 
     private List<DataPartition> currentSplits = new ArrayList<>();
+    private DbConnectionProvider dbConnectionProvider;
 
     public DbReaderWithProgressHandling(
             SourceReaderContext context,
@@ -57,8 +58,9 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     @Override
     public void start() {
         LOGGER.info("Starting source reader");
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
-        taskInfoRepository = new TaskInfoRepository(new DbConnectionProvider(parameterTool));
+        dbConnectionProvider = new DbConnectionProvider(parameterTool);
+        executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
+        taskInfoRepository = new TaskInfoRepository(dbConnectionProvider);
     }
 
     @Override
@@ -165,7 +167,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     @Override
     public void close() throws Exception {
-
+        dbConnectionProvider.close();
     }
 
     private void updateProgress(long checkpointId) {

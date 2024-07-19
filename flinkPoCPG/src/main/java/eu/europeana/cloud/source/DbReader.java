@@ -29,6 +29,7 @@ public class DbReader implements SourceReader<ExecutionRecord, DataPartition> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbReader.class);
 
     private List<DataPartition> currentSplits = new ArrayList<>();
+    private DbConnectionProvider dbConnectionProvider;
 
     public DbReader(
             SourceReaderContext context,
@@ -40,7 +41,8 @@ public class DbReader implements SourceReader<ExecutionRecord, DataPartition> {
     @Override
     public void start() {
         LOGGER.info("Starting source reader");
-        this.executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
+        dbConnectionProvider = new DbConnectionProvider(parameterTool);
+        this.executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
     }
 
     @Override
@@ -104,6 +106,6 @@ public class DbReader implements SourceReader<ExecutionRecord, DataPartition> {
 
     @Override
     public void close() throws Exception {
-
+        dbConnectionProvider.close();
     }
 }

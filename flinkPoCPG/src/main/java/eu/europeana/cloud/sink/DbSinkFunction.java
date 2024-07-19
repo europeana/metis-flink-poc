@@ -22,13 +22,20 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
 
     private ExecutionRecordRepository executionRecordRepository;
     private ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository;
+    private DbConnectionProvider dbConnectionProvider;
 
     @Override
     public void open(Configuration parameters) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromMap(getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap());
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
-        executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(new DbConnectionProvider(parameterTool));
+        dbConnectionProvider = new DbConnectionProvider(parameterTool);
+        executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
+        executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(dbConnectionProvider);
         LOGGER.debug("Opening DbSinkFunction");
+    }
+
+    @Override
+    public void close() throws Exception {
+        dbConnectionProvider.close();
     }
 
     @Override

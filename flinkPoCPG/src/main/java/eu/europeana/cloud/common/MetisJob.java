@@ -54,18 +54,23 @@ public abstract class MetisJob {
     }
 
     protected void generateTaskIdIfNeeded() {
-        TaskInfoRepository taskInfoRepository = new TaskInfoRepository(new DbConnectionProvider(tool));
-        if (tool.get(JobParamName.TASK_ID) == null) {
-            long taskId = taskIdGenerator.nextLong();
-            taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
-            tool = tool.mergeWith(ParameterTool.fromMap(Map.of(JobParamName.TASK_ID, taskId + "")));
-        } else {
-            long taskId = tool.getLong(JobParamName.TASK_ID);
-            try {
-                taskInfoRepository.get(taskId);
-            } catch (TaskInfoNotFoundException e) {
+        try (DbConnectionProvider dbConnectionProvider = new DbConnectionProvider(tool)) {
+
+            TaskInfoRepository taskInfoRepository = new TaskInfoRepository(dbConnectionProvider);
+            if (tool.get(JobParamName.TASK_ID) == null) {
+                long taskId = taskIdGenerator.nextLong();
                 taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
+                tool = tool.mergeWith(ParameterTool.fromMap(Map.of(JobParamName.TASK_ID, taskId + "")));
+            } else {
+                long taskId = tool.getLong(JobParamName.TASK_ID);
+                try {
+                    taskInfoRepository.get(taskId);
+                } catch (TaskInfoNotFoundException e) {
+                    taskInfoRepository.save(new TaskInfo(taskId, 0L, 0L));
+                }
             }
+        }catch (Exception e){
+            throw new RuntimeException("Error while generating task id!",e);
         }
     }
 
