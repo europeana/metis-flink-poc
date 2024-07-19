@@ -28,7 +28,9 @@ public class ExecutionRecordRepository implements DbRepository, Serializable {
     public void save(ExecutionRecordResult executionRecordResult) throws IOException {
 
         try (Connection con = dbConnectionProvider.getConnection();
-             PreparedStatement preparedStatement = con.prepareStatement("INSERT INTO \"batch-framework\".execution_record (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, RECORD_DATA) VALUES (?,?,?,?,?)")) {
+             PreparedStatement preparedStatement = con.prepareStatement(
+                 "INSERT INTO \"batch-framework\".execution_record (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, RECORD_DATA)"
+                 + " VALUES (?,?,?,?,?) ON CONFLICT (DATASET_ID,EXECUTION_ID, RECORD_ID) DO NOTHING")) {
 
             preparedStatement.setString(1, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getDatasetId());
             preparedStatement.setString(2, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getExecutionId());

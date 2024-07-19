@@ -23,7 +23,8 @@ public class ExecutionRecordExceptionLogRepository implements DbRepository, Seri
     public void save(ExecutionRecordResult executionRecordResult) {
         try (Connection con = dbConnectionProvider.getConnection();
              PreparedStatement preparedStatement = con.prepareStatement(
-                     "INSERT INTO \"batch-framework\".execution_record_exception_log (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, exception) VALUES (?,?,?,?,?)")
+                     "INSERT INTO \"batch-framework\".execution_record_exception_log (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, exception)"
+                         + " VALUES (?,?,?,?,?) ON CONFLICT (DATASET_ID, EXECUTION_ID, RECORD_ID) DO NOTHING")
         ) {
 
             preparedStatement.setString(1, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getDatasetId());
