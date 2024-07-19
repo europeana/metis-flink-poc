@@ -2,6 +2,7 @@ package eu.europeana.cloud.tool;
 
 
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
+import java.sql.SQLException;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,7 @@ public class DbConnectionProvider implements Serializable {
         this.password = parameterTool.get(JobParamName.DATASOURCE_PASSWORD);
     }
 
-    public Connection getConnection() {
-        try {
-            return DriverManager
-                    .getConnection(url, user, password);
-        } catch (Exception e) {
-            LOGGER.error("Could not connect to PostgreSQL database", e);
-            System.exit(0);
-        }
-        return null;
+    public Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, user, password);
     }
 }
