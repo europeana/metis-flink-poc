@@ -4,16 +4,12 @@ package eu.europeana.cloud.tool;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import java.sql.SQLException;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
 public class DbConnectionProvider implements Serializable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DbConnectionProvider.class);
 
     private final String url;
     private final String user;

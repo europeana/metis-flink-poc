@@ -13,8 +13,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExecutionRecordRepository implements DbRepository, Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionRecordRepository.class);
 
     private final DbConnectionProvider dbConnectionProvider;
 
@@ -32,12 +36,17 @@ public class ExecutionRecordRepository implements DbRepository, Serializable {
                  "INSERT INTO \"batch-framework\".execution_record (DATASET_ID,EXECUTION_ID,EXECUTION_NAME, RECORD_ID, RECORD_DATA)"
                  + " VALUES (?,?,?,?,?) ON CONFLICT (DATASET_ID,EXECUTION_ID, RECORD_ID) DO NOTHING")) {
 
-            preparedStatement.setString(1, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getDatasetId());
-            preparedStatement.setString(2, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getExecutionId());
-            preparedStatement.setString(3, executionRecordResult.getExecutionRecord().getExecutionName());
-            preparedStatement.setString(4, executionRecordResult.getExecutionRecord().getExecutionRecordKey().getRecordId());
-            preparedStatement.setString(5, executionRecordResult.getExecutionRecord().getRecordData());
-            preparedStatement.execute();
+            ExecutionRecord executionRecord = executionRecordResult.getExecutionRecord();
+            preparedStatement.setString(1, executionRecord.getExecutionRecordKey().getDatasetId());
+            preparedStatement.setString(2, executionRecord.getExecutionRecordKey().getExecutionId());
+            preparedStatement.setString(3, executionRecord.getExecutionName());
+            preparedStatement.setString(4, executionRecord.getExecutionRecordKey().getRecordId());
+            preparedStatement.setString(5, executionRecord.getRecordData());
+            int modifiedRowCount = preparedStatement.executeUpdate();
+
+            if(modifiedRowCount==0){
+                LOGGER.info("Execution record already existed in the DB: {}", executionRecord.getExecutionRecordKey());
+            }
         } catch (SQLException e) {
             throw new IOException(e);
         }

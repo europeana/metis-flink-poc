@@ -38,7 +38,7 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
         } else {
             storeExecutionRecordException(executionRecordResult);
         }
-        LOGGER.info("Writing element {}", executionRecordResult.getExecutionRecord().getExecutionRecordKey().getRecordId());
+        LOGGER.info("Written element {}", executionRecordResult.getExecutionRecord().getExecutionRecordKey().getRecordId());
     }
 
     private boolean recordProcessedSuccessfully(ExecutionRecordResult executionRecordResult) {
