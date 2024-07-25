@@ -10,7 +10,6 @@ import eu.europeana.cloud.source.oai.OAIHeadersSource;
 
 import eu.europeana.cloud.sink.DbSinkFunction;
 import eu.europeana.cloud.flink.client.constants.postgres.JobName;
-import eu.europeana.cloud.flink.client.constants.postgres.JobParam;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;

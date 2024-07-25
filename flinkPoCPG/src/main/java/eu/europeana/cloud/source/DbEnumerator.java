@@ -31,6 +31,7 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
     TaskInfoRepository taskInfoRepo;
 
     private final List<DataPartition> dataPartitions = new ArrayList<>();
+    private DbConnectionProvider dbConnectionProvider;
 
     public DbEnumerator(
             SplitEnumeratorContext<DataPartition> context,
@@ -44,8 +45,9 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
     @Override
     public void start() {
         LOGGER.info("Starting DbEnumerator");
-        executionRecordRepository = new ExecutionRecordRepository(new DbConnectionProvider(parameterTool));
-        taskInfoRepo = new TaskInfoRepository(new DbConnectionProvider(parameterTool));
+        dbConnectionProvider = new DbConnectionProvider(parameterTool);
+        executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
+        taskInfoRepo = new TaskInfoRepository(dbConnectionProvider);
         prepareSplits();
     }
 
@@ -80,7 +82,12 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
+        try {
+            dbConnectionProvider.close();
+        }catch (Exception e){
+            throw new IOException("Could not close dbProvider!",e);
+        }
     }
 
 
