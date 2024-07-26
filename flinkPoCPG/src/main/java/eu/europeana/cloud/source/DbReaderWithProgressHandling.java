@@ -7,6 +7,7 @@ import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.tool.DbConnectionProvider;
+import java.io.IOException;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
@@ -75,56 +76,63 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
             context.sendSplitRequest();
             splitFetched = true;
         }
+
         if (!currentSplits.isEmpty()) {
-            DataPartition currentSplit = currentSplits.getFirst();
-            if (polledRecords == null) {
-                LOGGER.debug("Fetching records from database");
-                polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
-                        parameterTool.getRequired(JobParamName.DATASET_ID),
-                        parameterTool.getRequired(JobParamName.EXECUTION_ID),
-                        currentSplit.offset(), currentSplit.limit());
-            } else {
-                LOGGER.debug("Already fetched records exist");
-            }
+            fetchRecordsIfNeeded();
 
-            boolean ifPolledRecordsExhausted = handlePolledRecords(output);
-
-            if (ifPolledRecordsExhausted) {
+            if (!polledRecords.isEmpty()) {
+                ExecutionRecord executionRecord = polledRecords.removeFirst();
+                emitRecord(output, executionRecord);
+                if (pendingLimitReached()) {
+                    LOGGER.debug("Blocking reader due to hitting pending records limit");
+                    blockReader();
+                    return InputStatus.NOTHING_AVAILABLE;
+                }
+            }else {
                 LOGGER.debug("Removing split due to exhaustion of polled record set");
                 currentSplits.removeFirst();
                 splitFetched = false;
                 polledRecords = null;
                 return InputStatus.MORE_AVAILABLE;
-            } else {
-                LOGGER.debug("Sending signal about more records being present in polled record set");
             }
         }
         return InputStatus.NOTHING_AVAILABLE;
     }
 
-    private boolean handlePolledRecords(ReaderOutput<ExecutionRecord> output) {
-        boolean ifPolledRecordsExhausted = true;
-        while (!polledRecords.isEmpty()) {
-            ExecutionRecord executionRecord = polledRecords.removeFirst();
-            currentRecordPendingCount++;
-            int currentlyPendingForThisCheckpoint = 1;
-            if (recordPendingCountPerCheckpoint.containsKey(currentCheckpointId)) {
-                currentlyPendingForThisCheckpoint = recordPendingCountPerCheckpoint.get(currentCheckpointId);
-                recordPendingCountPerCheckpoint.put(currentCheckpointId, ++currentlyPendingForThisCheckpoint);
-            } else {
-                recordPendingCountPerCheckpoint.put(currentCheckpointId, currentlyPendingForThisCheckpoint);
-            }
-            LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
-            LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, currentCheckpointId);
-            output.collect(executionRecord);
-            if (currentRecordPendingCount >= maxRecordPending) {
-                LOGGER.debug("Blocking reader due to hitting pending records limit");
-                blockReader();
-                ifPolledRecordsExhausted = false;
-                break;
-            }
+    private void emitRecord(ReaderOutput<ExecutionRecord> output, ExecutionRecord executionRecord) {
+        currentRecordPendingCount++;
+        int currentlyPendingForThisCheckpoint = 1;
+        if (recordPendingCountPerCheckpoint.containsKey(currentCheckpointId)) {
+            currentlyPendingForThisCheckpoint = recordPendingCountPerCheckpoint.get(currentCheckpointId);
+            recordPendingCountPerCheckpoint.put(currentCheckpointId, ++currentlyPendingForThisCheckpoint);
+        } else {
+            recordPendingCountPerCheckpoint.put(currentCheckpointId, currentlyPendingForThisCheckpoint);
         }
-        return ifPolledRecordsExhausted;
+        LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
+        LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, currentCheckpointId);
+        output.collect(executionRecord);
+    }
+
+    private void fetchRecordsIfNeeded() throws IOException {
+        DataPartition currentSplit = currentSplits.getFirst();
+        if (polledRecords == null) {
+            LOGGER.debug("Fetching records from database");
+            polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
+                    parameterTool.getRequired(JobParamName.DATASET_ID),
+                    parameterTool.getRequired(JobParamName.EXECUTION_ID),
+                    currentSplit.offset(), currentSplit.limit());
+        } else {
+            LOGGER.debug("Already fetched records exist");
+        }
+    }
+
+    private boolean pendingLimitReached() {
+        if(currentRecordPendingCount >= maxRecordPending){
+            LOGGER.debug("Pending limit: {} reached: {}", maxRecordPending, currentRecordPendingCount);
+            return true;
+        }else{
+            return false;
+        }
     }
 
     @Override

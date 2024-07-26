@@ -46,6 +46,7 @@ public abstract class MetisJob {
         generateTaskIdIfNeeded();
         env.getConfig().setGlobalJobParameters(tool);
         env.enableCheckpointing(2000);
+        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(1000);
         return env;
     }
 
