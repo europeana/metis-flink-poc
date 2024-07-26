@@ -42,6 +42,9 @@ data:
     logger.poc.name = eu.europeana.cloud.flink
     logger.poc.level = DEBUG
 
+    logger.source.name = eu.europeana.cloud.source
+    logger.source.level = DEBUG
+
     # Uncomment this if you want to _only_ change Flink's logging
     #logger.flink.name = org.apache.flink
     #logger.flink.level = INFO
