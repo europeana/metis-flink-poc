@@ -31,6 +31,7 @@ public class OAIJob extends MetisJob {
         env.setParallelism(1);
         generateTaskIdIfNeeded();
         env.getConfig().setGlobalJobParameters(tool);
+        env.getCheckpointConfig().disableCheckpointing();
         return env;
     }
 
