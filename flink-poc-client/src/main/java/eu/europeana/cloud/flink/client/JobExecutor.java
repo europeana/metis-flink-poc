@@ -11,6 +11,7 @@ import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 public class JobExecutor {
@@ -20,7 +21,8 @@ public class JobExecutor {
   private static final String STATE_CANCELED = "CANCELED";
   private static final String STATE_FAILED = "FAILED";
   private static final Set<String> END_STATES = Set.of(STATE_FINISHED, STATE_FAILED, STATE_CANCELED);
-
+  public static final int MAX_RETRIES = 20;
+  public static final long SLEEP_BETWEEN_RETRIES = 15000L;
 
   private final String jarId;
   private final RestTemplate restTemplate;
@@ -56,7 +58,7 @@ public class JobExecutor {
     int i = 0;
     do {
       Thread.sleep(200L);
-      details = getProgress(jobId);
+      details = getProgressWithRetry(jobId);
       if (++i % 5 == 0) {
         LOGGER.info("Progress: {}", details);
       }
@@ -67,6 +69,20 @@ public class JobExecutor {
     }
 
     LOGGER.info("Job finished! Details: {}", details);
+  }
+
+  private JobDetails getProgressWithRetry(String jobId) throws InterruptedException {
+    int i = 0;
+    while (true) {
+      try {
+        return getProgress(jobId);
+      } catch (RestClientException e) {
+        Thread.sleep(SLEEP_BETWEEN_RETRIES);
+        if (++i > MAX_RETRIES) {
+          throw e;
+        }
+      }
+    }
   }
 
   public JobDetails getProgress(String jobId) {
