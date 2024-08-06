@@ -83,7 +83,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
             if (!polledRecords.isEmpty()) {
                 ExecutionRecord executionRecord = polledRecords.removeFirst();
                 emitRecord(output, executionRecord);
-                if (pendingLimitReached()) {
+                if (isPendingLimitReached()) {
                     LOGGER.debug("Blocking reader due to hitting pending records limit");
                     blockReader();
                     return InputStatus.NOTHING_AVAILABLE;
@@ -126,7 +126,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         }
     }
 
-    private boolean pendingLimitReached() {
+    private boolean isPendingLimitReached() {
         if(currentRecordPendingCount >= maxRecordPending){
             LOGGER.debug("Pending limit: {} reached: {}", maxRecordPending, currentRecordPendingCount);
             return true;
