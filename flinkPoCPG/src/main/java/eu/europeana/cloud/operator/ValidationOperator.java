@@ -57,8 +57,8 @@ public class ValidationOperator extends ProcessFunction<ExecutionRecord, Executi
     public void processElement(ExecutionRecord sourceRecord, ProcessFunction<ExecutionRecord, ExecutionRecordResult>.Context ctx, Collector<ExecutionRecordResult> out) throws Exception {
         LOGGER.debug("Validating record with id {} on instance: {}", sourceRecord.getExecutionRecordKey().getRecordId(), this);
         ExecutionRecordResult resultRecord = prepareResultRecord(sourceRecord);
-        reorderFileContent(resultRecord);
-        validateFile(resultRecord);
+        String sortedDocument = reorderFileContent(resultRecord);
+        validateFile(resultRecord, sortedDocument);
         out.collect(resultRecord);
     }
 
@@ -68,21 +68,20 @@ public class ValidationOperator extends ProcessFunction<ExecutionRecord, Executi
 
 
 
-    private void reorderFileContent(ExecutionRecordResult executionRecordResult) throws TransformationException {
+    private String reorderFileContent(ExecutionRecordResult executionRecordResult) throws TransformationException {
         LOGGER.debug("Reordering the file");
         StringWriter writer = transformer.transform(executionRecordResult.getRecordData().getBytes(), null);
-        executionRecordResult.setRecordData(writer.toString());
+        return writer.toString();
     }
 
-    private void validateFile(ExecutionRecordResult executionRecordResult) {
-        String document = executionRecordResult.getRecordData();
+    private void validateFile(ExecutionRecordResult executionRecordResult, String sortedDocument) {
         ValidationResult result =
-                validationService.singleValidation(
-                        schema,
-                        rootFileLocation,
-                        schematronFileLocation,
-                        document
-                );
+            validationService.singleValidation(
+                schema,
+                rootFileLocation,
+                schematronFileLocation,
+                sortedDocument
+            );
         if (result.isSuccess()) {
             LOGGER.debug("Validation Success for datasetId {}, recordId {}", executionRecordResult.getExecutionRecord().getExecutionRecordKey().getDatasetId(),
                     executionRecordResult.getRecordId());
