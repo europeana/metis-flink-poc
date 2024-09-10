@@ -31,6 +31,8 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private CompletableFuture<Void> readerAvailable = new CompletableFuture<>();
     private final int maxRecordPending;
     private int currentRecordPendingCount;
+    private int allCommitedRecordCount;
+    private int currentSplitCommitedRecordCount;
     private final TreeMap<Long, Integer> recordPendingCountPerCheckpoint = new TreeMap<>();
     private boolean splitFetched = false;
     private boolean noMoreSplits = false;
@@ -43,6 +45,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     private List<DataPartition> currentSplits = new ArrayList<>();
     private DbConnectionProvider dbConnectionProvider;
+    private DataPartition currentSplit;
 
     public DbReaderWithProgressHandling(
             SourceReaderContext context,
@@ -89,10 +92,15 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                     return InputStatus.NOTHING_AVAILABLE;
                 }
             }else {
-                LOGGER.debug("Removing split due to exhaustion of polled record set");
+                LOGGER.debug("Removing split: {} due to exhaustion of polled record set"
+                        + ", after commit: {} records of: {} all commited, ",
+                   currentSplit , currentSplitCommitedRecordCount, allCommitedRecordCount);
                 currentSplits.removeFirst();
                 splitFetched = false;
                 polledRecords = null;
+                context.sendSourceEventToCoordinator(
+                    new SplitCompletedEvent(currentSplit)
+                );
                 return InputStatus.MORE_AVAILABLE;
             }
         }
@@ -114,13 +122,15 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     }
 
     private void fetchRecordsIfNeeded() throws IOException {
-        DataPartition currentSplit = currentSplits.getFirst();
+        currentSplit = currentSplits.getFirst();
         if (polledRecords == null) {
             LOGGER.debug("Fetching records from database");
             polledRecords = executionRecordRepository.getByDatasetIdAndExecutionIdAndOffsetAndLimit(
                     parameterTool.getRequired(JobParamName.DATASET_ID),
                     parameterTool.getRequired(JobParamName.EXECUTION_ID),
                     currentSplit.offset(), currentSplit.limit());
+
+            currentSplitCommitedRecordCount = 0;
         } else {
             LOGGER.debug("Already fetched records exist");
         }
@@ -192,7 +202,12 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
             taskInfoRepository.incrementWriteCount(
                     taskId,
                     committedRecordPendingCount);
+            allCommitedRecordCount += committedRecordPendingCount;
+            currentSplitCommitedRecordCount += committedRecordPendingCount;
             currentRecordPendingCount -= committedRecordPendingCount;
+            LOGGER.debug("Progress updated successfully! Increased commited records by: {}"
+                    + ", commited in current split: {}, all commited: {}"
+                , committedRecordPendingCount, currentSplitCommitedRecordCount, allCommitedRecordCount);
         } else {
             LOGGER.debug("Nothing to store for checkpoint with id: {} or less", checkpointId);
         }

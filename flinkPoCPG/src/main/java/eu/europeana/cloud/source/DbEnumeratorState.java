@@ -1,7 +1,13 @@
 package eu.europeana.cloud.source;
 
-/**
- * It is not used at all in our implementations. Added only because it is required in the interfaces;
- */
-public class DbEnumeratorState {
+import eu.europeana.cloud.model.DataPartition;
+import java.io.Serializable;
+import java.util.List;
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class DbEnumeratorState implements Serializable {
+  private List<DataPartition> partitions;
 }
