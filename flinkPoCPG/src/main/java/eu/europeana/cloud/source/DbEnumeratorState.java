@@ -12,6 +12,8 @@ public class DbEnumeratorState implements Serializable {
   private long recordsToBeProcessed;
   private long allPartitionCount;
   private long startedPartitionCount;
+  private long finishedRecordCount;
+  private long commitCount;
   private List<DataPartition> incompletePartitions;
 
 }

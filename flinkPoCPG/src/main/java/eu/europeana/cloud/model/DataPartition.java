@@ -6,6 +6,7 @@ import java.io.Serializable;
 
 public record DataPartition(long offset, long limit) implements SourceSplit, Serializable {
 
+    //TODO Check if is it proper implementation.
     @Override
     public String splitId() {
         return "customSplitId";

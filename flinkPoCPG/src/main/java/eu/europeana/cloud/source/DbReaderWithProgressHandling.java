@@ -5,7 +5,6 @@ import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
-import eu.europeana.cloud.repository.TaskInfoRepository;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 import java.io.IOException;
 import org.apache.flink.api.connector.source.ReaderOutput;
@@ -27,7 +26,6 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private final SourceReaderContext context;
     private final ParameterTool parameterTool;
     private ExecutionRecordRepository executionRecordRepository;
-    private TaskInfoRepository taskInfoRepository;
     private CompletableFuture<Void> readerAvailable = new CompletableFuture<>();
     private final int maxRecordPending;
     private int currentRecordPendingCount;
@@ -37,7 +35,6 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private boolean splitFetched = false;
     private boolean noMoreSplits = false;
     private long currentCheckpointId = INITIAL_CHECKPOINT_ID;
-    private final long taskId;
 
     private List<ExecutionRecord> polledRecords = null;
 
@@ -46,13 +43,13 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     private List<DataPartition> currentSplits = new ArrayList<>();
     private DbConnectionProvider dbConnectionProvider;
     private DataPartition currentSplit;
+    private int currentSplitEmittedRecordCount;
 
     public DbReaderWithProgressHandling(
             SourceReaderContext context,
             ParameterTool parameterTool) {
         this.context = context;
         this.parameterTool = parameterTool;
-        taskId = parameterTool.getLong(JobParamName.TASK_ID);
         maxRecordPending = parameterTool.
                 getInt(
                         JobParamName.MAX_RECORD_PENDING,
@@ -64,7 +61,6 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         LOGGER.info("Starting source reader");
         dbConnectionProvider = new DbConnectionProvider(parameterTool);
         executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
-        taskInfoRepository = new TaskInfoRepository(dbConnectionProvider);
     }
 
     @Override
@@ -99,8 +95,9 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                 splitFetched = false;
                 polledRecords = null;
                 context.sendSourceEventToCoordinator(
-                    new SplitCompletedEvent(currentSplit)
+                    new SplitCompletedEvent(currentCheckpointId, currentSplit, currentSplitEmittedRecordCount)
                 );
+                currentSplit = null;
                 return InputStatus.MORE_AVAILABLE;
             }
         }
@@ -119,6 +116,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         LOGGER.debug("Emitting record {} - currently pending {} records", executionRecord.getExecutionRecordKey().getRecordId(), currentRecordPendingCount);
         LOGGER.debug("There are {} records pending for checkpoint {}", currentlyPendingForThisCheckpoint, currentCheckpointId);
         output.collect(executionRecord);
+        currentSplitEmittedRecordCount++;
     }
 
     private void fetchRecordsIfNeeded() throws IOException {
@@ -131,6 +129,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                     currentSplit.offset(), currentSplit.limit());
 
             currentSplitCommitedRecordCount = 0;
+            currentSplitEmittedRecordCount = 0;
         } else {
             LOGGER.debug("Already fetched records exist");
         }
@@ -148,7 +147,7 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     @Override
     public void notifyCheckpointComplete(long checkpointId) {
         LOGGER.debug("Checkpoint successfully finished on flink with id: {}", checkpointId);
-        updateProgress(checkpointId);
+        updatePendingRecordsState(checkpointId);
         if (currentRecordPendingCount < maxRecordPending) {
             unblockReader();
         }
@@ -156,8 +155,21 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
 
     @Override
     public List<DataPartition> snapshotState(long checkpointId) {
-        LOGGER.debug("Storing snapshot for checkpoint with id: {}", checkpointId);
+        LOGGER.info("Storing snapshot for checkpoint with id: {}", checkpointId);
         this.currentCheckpointId = checkpointId;
+
+        if (currentSplit != null) {
+            //TODO we could consider if we need to sent the event every time although it does not look as a big overhead.
+            //Cause it is not every record but only every snapshot.
+            context.sendSourceEventToCoordinator(
+                new ProgressSnapshotEvent(currentCheckpointId, currentSplit, currentSplitEmittedRecordCount));
+        }
+
+        //TODO Validate if this method returns valid content. It could return partition with somehow stored progress for
+        // current split. It could be used in case of failure when this split goes back to the enumerator and could be used
+        // for more current and actual progress state storing in case of failure. Cause the progress send in event coudl be
+        // somehow delayed in this case it is stored in the state so could be on time,
+        // but it would go to th enumerator only in case of failure. So would be interpreted only after failure.
         return List.of();
     }
 
@@ -188,28 +200,24 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
         dbConnectionProvider.close();
     }
 
-    private void updateProgress(long checkpointId) {
-        Set<Map.Entry<Long, Integer>> alreadyCommittedCheckpointSet = recordPendingCountPerCheckpoint.headMap(checkpointId, false).entrySet();
+    private void updatePendingRecordsState(long completedCheckpointId) {
+        Set<Map.Entry<Long, Integer>> alreadyCommittedCheckpointSet = recordPendingCountPerCheckpoint.headMap(completedCheckpointId, false).entrySet();
 
-        long committedRecordPendingCount = alreadyCommittedCheckpointSet
+        int committedRecordPendingCount = alreadyCommittedCheckpointSet
                 .stream().map(Map.Entry::getValue)
                 .reduce(0, Integer::sum);
         Set<Long> committedCheckpoints = alreadyCommittedCheckpointSet
                 .stream().map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
         if (committedRecordPendingCount > 0) {
-            LOGGER.debug("Storing progress for task with id: {} for checkpoints with ids: {} and total of records: {}", taskId, committedCheckpoints, committedRecordPendingCount);
-            taskInfoRepository.incrementWriteCount(
-                    taskId,
-                    committedRecordPendingCount);
             allCommitedRecordCount += committedRecordPendingCount;
             currentSplitCommitedRecordCount += committedRecordPendingCount;
             currentRecordPendingCount -= committedRecordPendingCount;
-            LOGGER.debug("Progress updated successfully! Increased commited records by: {}"
+            LOGGER.debug("Pending records state updated successfully! Increased commited records by: {}"
                     + ", commited in current split: {}, all commited: {}"
                 , committedRecordPendingCount, currentSplitCommitedRecordCount, allCommitedRecordCount);
         } else {
-            LOGGER.debug("Nothing to store for checkpoint with id: {} or less", checkpointId);
+            LOGGER.debug("Pending records state did not changed for checkpoint with id: {} or less", completedCheckpointId);
         }
         recordPendingCountPerCheckpoint.keySet().removeAll(committedCheckpoints);
     }
