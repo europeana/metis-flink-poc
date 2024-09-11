@@ -9,5 +9,9 @@ import lombok.Data;
 @Data
 @Builder
 public class DbEnumeratorState implements Serializable {
-  private List<DataPartition> partitions;
+  private long recordsToBeProcessed;
+  private long allPartitionCount;
+  private long startedPartitionCount;
+  private List<DataPartition> incompletePartitions;
+
 }
