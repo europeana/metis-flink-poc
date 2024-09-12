@@ -16,6 +16,7 @@
         <metis.version>13-SNAPSHOT</metis.version>
         <jackson.version>2.16.1</jackson.version>
         <version.spring-framework>6.1.4</version.spring-framework>
+        <version.bytebuddy>1.14.19</version.bytebuddy>
     </properties>
 
     <repositories>
@@ -217,6 +218,16 @@
             <groupId>eu.europeana.cloud.flink</groupId>
             <artifactId>flink-poc-client</artifactId>
             <version>1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <artifactId>byte-buddy</artifactId>
+            <groupId>net.bytebuddy</groupId>
+            <version>${version.bytebuddy}</version>
+        </dependency>
+        <dependency>
+            <artifactId>byte-buddy-agent</artifactId>
+            <groupId>net.bytebuddy</groupId>
+            <version>${version.bytebuddy}</version>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
