@@ -3,6 +3,7 @@ package eu.europeana.cloud.sink;
 import eu.europeana.cloud.model.ExecutionRecordResult;
 import eu.europeana.cloud.repository.ExecutionRecordExceptionLogRepository;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
+import eu.europeana.cloud.retryable.RetryableMethodExecutor;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -28,8 +29,9 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
     public void open(Configuration parameters) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromMap(getRuntimeContext().getExecutionConfig().getGlobalJobParameters().toMap());
         dbConnectionProvider = new DbConnectionProvider(parameterTool);
-        executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
-        executionRecordExceptionLogRepository = new ExecutionRecordExceptionLogRepository(dbConnectionProvider);
+        executionRecordRepository = RetryableMethodExecutor.createRetryProxy(new ExecutionRecordRepository(dbConnectionProvider));
+        executionRecordExceptionLogRepository =
+            RetryableMethodExecutor.createRetryProxy(new ExecutionRecordExceptionLogRepository(dbConnectionProvider));
         LOGGER.debug("Opening DbSinkFunction");
     }
 

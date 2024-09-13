@@ -1,10 +1,10 @@
 package eu.europeana.cloud.source;
 
-import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.TaskInfo;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.repository.TaskInfoRepository;
+import eu.europeana.cloud.retryable.RetryableMethodExecutor;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import java.util.LinkedHashMap;
@@ -82,8 +82,8 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
   public void start() {
     LOGGER.info("Starting DbEnumerator");
     dbConnectionProvider = new DbConnectionProvider(parameterTool);
-    executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
-    taskInfoRepo = new TaskInfoRepository(dbConnectionProvider);
+    executionRecordRepository = RetryableMethodExecutor.createRetryProxy(new ExecutionRecordRepository(dbConnectionProvider));
+    taskInfoRepo = RetryableMethodExecutor.createRetryProxy(new TaskInfoRepository(dbConnectionProvider));
     validateTaskExists();
     if (allPartitionCount == NOT_EVALUATED) {
       evaluateSplitCount();
@@ -184,16 +184,22 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
   public void notifyCheckpointComplete(long checkpointId) {
     LOGGER.info("Checkpoint: {} completed. Updating progress... Map:{}", checkpointId,checkpointIdToFinishedRecordCountMap);
     SortedMap<Long, Long> approvedProgresses = checkpointIdToFinishedRecordCountMap.headMap(checkpointId, true);
-    Map.Entry<Long, Long> lastProgress = approvedProgresses.lastEntry();
-    if (lastProgress != null) {
+    Map.Entry<Long, Long> lastApprovedProgress = approvedProgresses.lastEntry();
+    if (lastApprovedProgress != null) {
       //TODO Commit count is not strictly evaluated cause in case of restart of job in case of exception
       //This value is lost and set to the last snapshot value. So we need to increase it earlier
       // during snapshot start and store here but we also need not increase it again if snapshot
       // is aborted, so it is a bit difficult.
       //We could consider small optimisation to not save progress if there is no change in it.
       //Then for example we could save modification date to db, for debug purpose.
-      TaskInfo taskInfo = new TaskInfo(taskId, ++commitCount, lastProgress.getValue());
+      TaskInfo taskInfo = new TaskInfo(taskId, ++commitCount, lastApprovedProgress.getValue());
+
+      //TODO The repository uses retries in case of failure, but because updating progress is not a key feature,
+      // without it the task should finish its work properly. Beside that we could omit some updates of progress
+      // as long as we store last progress, when the task is whole complete.
+      // So we could consider more sophisticated failover mechanism with lesser impact on the execution.
       taskInfoRepo.update(taskInfo);
+
       approvedProgresses.clear();
       LOGGER.info("Updated task progress in DB: {}", taskInfo);
     } else {
@@ -246,10 +252,8 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
   }
 
   private void validateTaskExists() {
-    try {
-       taskInfoRepo.get(taskId);
-    } catch (TaskInfoNotFoundException e) {
-      LOGGER.error("Task not found in the database. It should never happen", e);
+    if(taskInfoRepo.findById(taskId).isEmpty()){
+      LOGGER.error("Task not found in the database. It should never happen.");
       System.exit(1);
     }
   }

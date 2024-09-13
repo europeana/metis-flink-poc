@@ -2,6 +2,7 @@ package eu.europeana.cloud.repository;
 
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordResult;
+import eu.europeana.cloud.retryable.Retryable;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Retryable(delay = 5000, maxAttempts = 5)
 public class ExecutionRecordExceptionLogRepository implements DbRepository, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionRecordExceptionLogRepository.class);
@@ -20,6 +22,11 @@ public class ExecutionRecordExceptionLogRepository implements DbRepository, Seri
     private static final String NO_OF_ELEMENTS = "select count(*) as elements from \"batch-framework\".execution_record_exception_log where dataset_id = ? and execution_id = ?";
 
     private final DbConnectionProvider dbConnectionProvider;
+
+    //Needed for byte-buddy proxy
+    public ExecutionRecordExceptionLogRepository() {
+        dbConnectionProvider = null;
+    }
 
     public ExecutionRecordExceptionLogRepository(DbConnectionProvider dbConnectionProvider) {
         this.dbConnectionProvider = dbConnectionProvider;

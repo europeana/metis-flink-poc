@@ -2,6 +2,7 @@ package eu.europeana.cloud.repository;
 
 import eu.europeana.cloud.exception.TaskInfoNotFoundException;
 import eu.europeana.cloud.model.TaskInfo;
+import eu.europeana.cloud.retryable.Retryable;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 
 import java.io.Serializable;
@@ -9,10 +10,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
+@Retryable(delay = 5000, maxAttempts = 5)
 public class TaskInfoRepository implements DbRepository, Serializable {
 
     private final DbConnectionProvider dbConnectionProvider;
+
+    //Needed for byte-buddy proxy
+    public TaskInfoRepository() {
+        dbConnectionProvider = null;
+    }
 
     public TaskInfoRepository(DbConnectionProvider dbConnectionProvider) {
         this.dbConnectionProvider = dbConnectionProvider;
@@ -65,24 +73,22 @@ public class TaskInfoRepository implements DbRepository, Serializable {
         }
     }
 
-    public TaskInfo get(long taskId) throws TaskInfoNotFoundException {
+    public Optional<TaskInfo> findById(long taskId) {
         try (Connection con = dbConnectionProvider.getConnection();
              PreparedStatement preparedStatement = con.prepareStatement(
                      "SELECT * FROM \"batch-framework\".task_info WHERE TASK_ID = ?")) {
             preparedStatement.setLong(1, taskId);
 
-
             ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
-                return new TaskInfo(
+                return Optional.of(new TaskInfo(
                         resultSet.getLong("TASK_ID"),
                         resultSet.getLong("COMMIT_COUNT"),
                         resultSet.getLong("WRITE_COUNT")
-
-                );
+                ));
             } else {
-                throw new TaskInfoNotFoundException(taskId);
+                return Optional.empty();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

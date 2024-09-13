@@ -3,6 +3,7 @@ package eu.europeana.cloud.repository;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.model.ExecutionRecordKey;
 import eu.europeana.cloud.model.ExecutionRecordResult;
+import eu.europeana.cloud.retryable.Retryable;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Retryable(delay = 5000, maxAttempts = 5)
 public class ExecutionRecordRepository implements DbRepository, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionRecordRepository.class);
@@ -24,6 +26,11 @@ public class ExecutionRecordRepository implements DbRepository, Serializable {
 
     private static final String NO_OF_ELEMENTS = "select count(*) as elements from \"batch-framework\".execution_record where dataset_id = ? and execution_id = ?";
     private static final String LIMIT = "select * from \"batch-framework\".execution_record where dataset_id = ? and execution_id = ? offset ? limit ?;";
+
+    //Needed for byte-buddy proxy
+    public ExecutionRecordRepository() {
+        dbConnectionProvider = null;
+    }
 
     public ExecutionRecordRepository(DbConnectionProvider dbConnectionProvider) {
         this.dbConnectionProvider = dbConnectionProvider;

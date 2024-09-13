@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 
 import eu.europeana.cloud.flink.client.JobExecutor;
 import eu.europeana.cloud.flink.client.entities.JobDetails;
+import eu.europeana.cloud.retryable.RetryableMethodExecutor;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;
@@ -42,21 +43,25 @@ public class ProgressReport {
     }
 
     try(DbConnectionProvider dbConnectionProvider = new DbConnectionProvider(parameterTool)) {
+      ExecutionRecordRepository executionRecordRepository =
+          RetryableMethodExecutor.createRetryProxy(new ExecutionRecordRepository(dbConnectionProvider));
+      ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository =
+          RetryableMethodExecutor.createRetryProxy(new ExecutionRecordExceptionLogRepository(dbConnectionProvider));
+
       await().forever().until(() -> {
         final JobDetails jobDetailsInternal = jobExecutor.getProgress(jobId);
-        printProgress(datasetId, sourceExecutionId, targetExecutionId, dbConnectionProvider);
+        printProgress(datasetId, sourceExecutionId, targetExecutionId,
+            executionRecordRepository, executionRecordExceptionLogRepository);
         return jobDetailsInternal.getState().equals("FINISHED");
       });
     }
   }
 
   private static void printProgress(String datasetId, String sourceExecutionId,
-      String targetExecutionId, DbConnectionProvider dbConnectionProvider) {
+      String targetExecutionId, ExecutionRecordRepository executionRecordRepository,
+      ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository) {
 
     try {
-      ExecutionRecordRepository executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
-      ExecutionRecordExceptionLogRepository executionRecordExceptionLogRepository =
-          new ExecutionRecordExceptionLogRepository(dbConnectionProvider);
       final long sourceTotal = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);
       final long processedSuccess = executionRecordRepository.countByDatasetIdAndExecutionId(datasetId, targetExecutionId);
       final long processedException = executionRecordExceptionLogRepository.countByDatasetIdAndExecutionId(datasetId, sourceExecutionId);

@@ -2,6 +2,7 @@ package eu.europeana.cloud.source;
 
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
 import eu.europeana.cloud.model.DataPartition;
+import eu.europeana.cloud.retryable.RetryableMethodExecutor;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
@@ -42,7 +43,8 @@ public class DbReader implements SourceReader<ExecutionRecord, DataPartition> {
     public void start() {
         LOGGER.info("Starting source reader");
         dbConnectionProvider = new DbConnectionProvider(parameterTool);
-        this.executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
+        this.executionRecordRepository =
+            RetryableMethodExecutor.createRetryProxy(new ExecutionRecordRepository(dbConnectionProvider));
     }
 
     @Override

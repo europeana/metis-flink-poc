@@ -5,6 +5,7 @@ import eu.europeana.cloud.flink.client.constants.postgres.JobParamName;
 import eu.europeana.cloud.model.DataPartition;
 import eu.europeana.cloud.model.ExecutionRecord;
 import eu.europeana.cloud.repository.ExecutionRecordRepository;
+import eu.europeana.cloud.retryable.RetryableMethodExecutor;
 import eu.europeana.cloud.tool.DbConnectionProvider;
 import java.io.IOException;
 import org.apache.flink.api.connector.source.ReaderOutput;
@@ -60,14 +61,20 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
     public void start() {
         LOGGER.info("Starting source reader");
         dbConnectionProvider = new DbConnectionProvider(parameterTool);
-        executionRecordRepository = new ExecutionRecordRepository(dbConnectionProvider);
+
+        //TODO Using retry proxy is maybe not optimal strategy in this case. This source implements asynchronous interface, so
+        // we could do this retries in poolNext() method by returning InputStatus.NOTHING_AVAILABLE, wait a bit and notify
+        // completable future to poll source again. Or simple wait a bit in pollNext() but only once per one retry.
+        // In such cases we would less block checkpointing mechanism, which should work smoothly in case of infrastructure problems
+        // and potential job restarts. And when we do not block we could do more retries or longer pauses.
+        executionRecordRepository = RetryableMethodExecutor.createRetryProxy(new ExecutionRecordRepository(dbConnectionProvider));
     }
 
     @Override
     public InputStatus pollNext(ReaderOutput<ExecutionRecord> output) throws Exception {
         LOGGER.debug("Pooling next record");
         if (noMoreSplits) {
-            LOGGER.debug("There are no more splits");
+            LOGGER.info("There are no more splits");
             return InputStatus.END_OF_INPUT;
         }
         if (!splitFetched) {
