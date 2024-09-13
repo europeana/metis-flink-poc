@@ -42,6 +42,10 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
 
     @Override
     public void invoke(ExecutionRecordResult executionRecordResult, Context context) throws Exception {
+
+//        if(Math.random()<0.333) {
+//            throw new RuntimeException("Sink failed on the DB connection!");
+//        }
         if (recordProcessedSuccessfully(executionRecordResult)) {
             storeProcessedRecord(executionRecordResult);
         } else {
