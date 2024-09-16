@@ -11,7 +11,10 @@ import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 public class JobExecutor {
@@ -25,7 +28,8 @@ public class JobExecutor {
   public static final long SLEEP_BETWEEN_RETRIES = 15000L;
 
   private final String jarId;
-  private final RestTemplate restTemplate;
+  private final RestTemplate submitRestTemplate;
+  private final RestTemplate progressRestTemplate;
   private final String serverUrl;
   private final HttpHeaders httpHeader;
 
@@ -47,7 +51,10 @@ public class JobExecutor {
     this.serverUrl = serverUrl;
     httpHeader = new HttpHeaders();
     httpHeader.setBasicAuth(user, password);
-    restTemplate = new RestTemplate();
+    //We create different templates for submit job request which could take dozens of seconds, and we need bigger timeout,
+    // than for progress request, which is fast, and we want to have fast reaction to measure test time accurately.
+    submitRestTemplate = createSubmitRestTemplate();
+    progressRestTemplate = createProgressRestTemplate();
     this.jarId = jarId;
   }
 
@@ -75,8 +82,17 @@ public class JobExecutor {
     int i = 0;
     while (true) {
       try {
-        return getProgress(jobId);
+        try {
+          return getProgress(jobId);
+        } catch (RestClientResponseException e) {
+          if (e.getRawStatusCode() == HttpStatus.NOT_FOUND.value() &&
+              e.getResponseBodyAsString().contains("org.apache.flink.runtime.rest.NotFoundException")) {
+            throw new RuntimeException("There is no more job of the id: " + jobId + " on the server", e);
+          }
+          throw e;
+        }
       } catch (RestClientException e) {
+        LOGGER.warn("Exception while getting the job progress! Waiting for retry", e);
         Thread.sleep(SLEEP_BETWEEN_RETRIES);
         if (++i > MAX_RETRIES) {
           throw e;
@@ -86,15 +102,33 @@ public class JobExecutor {
   }
 
   public JobDetails getProgress(String jobId) {
-    return restTemplate.exchange(serverUrl+"/jobs/" + jobId, HttpMethod.GET, new HttpEntity(httpHeader), JobDetails.class).getBody();
+    return progressRestTemplate.exchange(serverUrl+"/jobs/" + jobId, HttpMethod.GET, new HttpEntity(httpHeader), JobDetails.class).getBody();
   }
 
   private String submitJob(SubmitJobRequest request) {
-    SubmitJobResponse result = restTemplate.exchange(
+    SubmitJobResponse result = submitRestTemplate.exchange(
         serverUrl + "/jars/" + jarId + "/run?entry-class=" + request.getEntryClass()
         , HttpMethod.POST, new HttpEntity<>(request, httpHeader), SubmitJobResponse.class).getBody();
     LOGGER.info("Submitted Job: {} Submission result:\n{}\nExecuting...", request, result);
     return result.getJobid();
+  }
+
+  private RestTemplate createSubmitRestTemplate() {
+    final RestTemplate restTemplate = new RestTemplate();
+    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout(60_000);
+    requestFactory.setReadTimeout(60_000);
+    restTemplate.setRequestFactory(requestFactory);
+    return restTemplate;
+  }
+
+  private RestTemplate createProgressRestTemplate() {
+    final RestTemplate restTemplate = new RestTemplate();
+    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout(10_000);
+    requestFactory.setReadTimeout(10_000);
+    restTemplate.setRequestFactory(requestFactory);
+    return restTemplate;
   }
 
 }
