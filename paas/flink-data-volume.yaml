@@ -4,12 +4,12 @@ metadata:
   annotations:
     volume.beta.kubernetes.io/storage-provisioner: cephfs.manila-cephfs.csi.openstack.org
     volume.kubernetes.io/storage-provisioner: cephfs.manila-cephfs.csi.openstack.org
-  name: job-manager-checkpoints
+  name: flink-data
 spec:
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: 50Gi
+      storage: 100Gi
   storageClassName: manila-share
   volumeMode: Filesystem

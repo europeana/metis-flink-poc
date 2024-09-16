@@ -14,6 +14,9 @@ spec:
         app: flink
         component: taskmanager
     spec:
+      serviceAccountName: flink-sa
+      imagePullSecrets:
+        - name: image-registry-pull
       containers:
         - name: taskmanager
           image: registry.paas.psnc.pl/ecloud-poc/flink-rich-node-poc:latest
@@ -34,8 +37,8 @@ spec:
               mountPath: /opt/flink/log
             - name: dumps
               mountPath: /dumps
-            - name: checkpoints
-              mountPath: /data/flink/checkpoints
+            - name: flink-data
+              mountPath: /data/flink
           resources:
             limits:
               cpu: "2"
@@ -55,9 +58,9 @@ spec:
                 path: log4j-console.properties
         - emptyDir: { }
           name: log-volume
-        - name: checkpoints
+        - name: flink-data
           persistentVolumeClaim:
-            claimName: job-manager-checkpoints
+            claimName: flink-data
         - emptyDir: { }
           name: conf-volume
         - name: dumps

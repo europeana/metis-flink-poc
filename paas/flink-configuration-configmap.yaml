@@ -24,6 +24,11 @@ data:
     jobmanager.resource-id: poc1
     state.backend.type: filesystem
     state.checkpoints.dir: file:///data/flink/checkpoints
+    state.savepoints.dir: file:///data/flink/savepoints
+    high-availability.storageDir: file:///data/flink/storage
+    high-availability: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
+    kubernetes.cluster-id: ecloud-flink-poc
+    kubernetes.namespace: ecloud-flink-poc
     execution.runtime-mode: STREAMING
     execution.checkpointing.interval: 30000
     execution.checkpointing.min-pause: 30000 
