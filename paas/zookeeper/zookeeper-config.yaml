@@ -1,0 +1,31 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: zookeeper-config
+data:
+  zoo.cfg: |-
+    dataDir=/data
+    dataLogDir=/datalog
+    tickTime=2000
+    initLimit=10
+    syncLimit=5
+    autopurge.snapRetainCount=5
+    autopurge.purgeInterval=6
+    maxClientCnxns=500
+    standaloneEnabled=true
+    admin.enableServer=true
+    clientPort=2181
+    server:1=0:0:0:0:2888:3888;2181
+  logback.xml: |-
+    <configuration>
+    
+      <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+      </appender>
+    
+      <root level="INFO">
+        <appender-ref ref="STDOUT" />
+      </root>
+    
+    </configuration>
+

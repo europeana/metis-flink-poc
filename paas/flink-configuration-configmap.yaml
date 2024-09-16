@@ -24,6 +24,13 @@ data:
     jobmanager.resource-id: poc1
     state.backend.type: filesystem
     state.checkpoints.dir: file:///data/flink/checkpoints
+    state.savepoints.dir: file:///data/flink/savepoints
+    high-availability.storageDir: file:///data/flink/storage
+    high-availability.type: zookeeper
+    high-availability.zookeeper.quorum: zookeeper:2181
+    high-availability.zookeeper.path.root: /flink
+    zookeeper.sasl.disable: true
+    kubernetes.cluster-id: ecloud-flink-poc
     execution.runtime-mode: STREAMING
     execution.checkpointing.interval: 30000
     execution.checkpointing.min-pause: 30000 

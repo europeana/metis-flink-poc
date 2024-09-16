@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: zookeeper
+    component: zookeeper
+  name: zookeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: zookeeper
+  serviceName: zookeeper
+  template:
+    metadata:
+      labels:
+        name: zookeeper
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: registry.paas.psnc.pl/base/zookeeper:latest
+          ports:
+            - containerPort: 2181
+              protocol: TCP
+            - containerPort: 2888
+              protocol: TCP
+            - containerPort: 3888
+              protocol: TCP
+            - containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /data
+              name: zoo-volume
+              subPath: data
+            - mountPath: /datalog
+              name: zoo-volume
+              subPath: datalog
+            - mountPath: /logs
+              name: zoo-volume
+              subPath: logs
+            - mountPath: /conf
+              name: config-volume
+      volumes:
+        - name: zoo-volume
+          persistentVolumeClaim:
+            claimName: zookeeper-volume
+        - configMap:
+            defaultMode: 420
+            name: zookeeper-config
+          name: config-volume
