@@ -25,7 +25,7 @@ public class DbConnectionProvider implements Serializable, AutoCloseable {
     }
 
     public Connection getConnection() throws SQLException {
-        if (Math.random() < 0.4) {
+        if (Math.random() < 0.333) {
             throw new SQLException("DB Connection failure");
         }
         return dataSource.getConnection();
