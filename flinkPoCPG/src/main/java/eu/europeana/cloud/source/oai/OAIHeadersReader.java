@@ -5,11 +5,11 @@ import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.OA
 import static eu.europeana.cloud.flink.client.constants.postgres.JobParamName.SET_SPEC;
 
 import eu.europeana.metis.harvesting.HarvesterFactory;
+import eu.europeana.metis.harvesting.HarvestingIterator;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvest;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
-import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeaderIterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.flink.api.connector.source.ReaderOutput;
@@ -64,7 +64,8 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
       return InputStatus.NOTHING_AVAILABLE;
     }
 
-    OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(oaiHarvest);
+    HarvestingIterator<OaiRecordHeader, OaiRecordHeader> headerIterator = harvester.harvestRecordHeaders(
+        oaiHarvest);
     headerIterator.forEach(oaiHeader -> {
       output.collect(oaiHeader);
       return IterationResult.CONTINUE;

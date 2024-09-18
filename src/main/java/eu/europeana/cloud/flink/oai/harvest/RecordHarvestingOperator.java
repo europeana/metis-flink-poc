@@ -69,7 +69,7 @@ public class RecordHarvestingOperator extends ProcessFunction<OaiRecordHeader, H
     HarvestedRecordTuple result = HarvestedRecordTuple.builder()
                                                       .externalId(recordId)
                                                       .timestamp(oaiRecord.getHeader().getDatestamp())
-                                                      .fileContent(oaiRecord.getRecord().readAllBytes())
+                                                      .fileContent(oaiRecord.getContent().readAllBytes())
                                                       .build();
 
     LOGGER.debug("Harvesting finished in: {}ms for {}", Clock.millisecondsSince(harvestingStartTime), recordId);

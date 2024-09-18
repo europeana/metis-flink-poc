@@ -9,10 +9,10 @@ import com.datastax.driver.core.Session;
 import eu.europeana.cloud.flink.common.sink.CassandraClusterBuilder;
 import eu.europeana.cloud.flink.oai.OAITaskParams;
 import eu.europeana.metis.harvesting.HarvesterFactory;
+import eu.europeana.metis.harvesting.HarvestingIterator;
 import eu.europeana.metis.harvesting.ReportingIteration.IterationResult;
 import eu.europeana.metis.harvesting.oaipmh.OaiHarvester;
 import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeader;
-import eu.europeana.metis.harvesting.oaipmh.OaiRecordHeaderIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -126,7 +126,8 @@ public class OAIHeadersReader implements SourceReader<OaiRecordHeader, OAISplit>
       LOGGER.info("<{}> Starting background harvesting...", System.identityHashCode(this));
       AtomicBoolean restored = new AtomicBoolean(false);
       OaiHarvester harvester = HarvesterFactory.createOaiHarvester(null, DEFAULT_RETRIES, SLEEP_TIME);
-      OaiRecordHeaderIterator headerIterator = harvester.harvestRecordHeaders(taskParams.getOaiHarvest());
+      HarvestingIterator<OaiRecordHeader, OaiRecordHeader> headerIterator =
+          harvester.harvestRecordHeaders(taskParams.getOaiHarvest());
 
       headerIterator.forEach(oaiHeader -> {
         if (restoredState != null && !restored.get()) {

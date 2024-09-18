@@ -54,7 +54,7 @@ public class RecordHarvestingOperator extends ProcessFunction<OaiRecordHeader, E
     ExecutionRecordResultBuilder executionRecordResultBuilder = ExecutionRecordResult.builder();
     try {
       OaiRecord oaiRecord = harvestRecordsContent(header);
-      executionRecordBuilder.recordData(new String(oaiRecord.getRecord().readAllBytes(), StandardCharsets.UTF_8));
+      executionRecordBuilder.recordData(new String(oaiRecord.getContent().readAllBytes(), StandardCharsets.UTF_8));
     } catch (Exception e) {
       executionRecordBuilder.recordData("");
       executionRecordResultBuilder.exception(ExceptionUtils.stringifyException(e));
