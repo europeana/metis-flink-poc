@@ -135,6 +135,10 @@ public class DbReaderWithProgressHandling implements SourceReader<ExecutionRecor
                     parameterTool.getRequired(JobParamName.EXECUTION_ID),
                     currentSplit.offset(), currentSplit.limit());
 
+            if(Math.random()<0.333) {
+                throw new RuntimeException("DBReader failed on fetching records!");
+            }
+
             currentSplitCommitedRecordCount = 0;
             currentSplitEmittedRecordCount = 0;
         } else {

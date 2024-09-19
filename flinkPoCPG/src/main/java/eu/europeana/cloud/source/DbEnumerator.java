@@ -95,10 +95,6 @@ public class DbEnumerator implements SplitEnumerator<DataPartition, DbEnumerator
 
   @Override
   public void handleSplitRequest(int subtaskId, String requesterHostname) {
-    if (Math.random() < 0.333) {
-      throw new RuntimeException("Artificial exception: DBEnumerator failed on assigning new partition!");
-    }
-
     DataPartition splitToBeServed;
     if (!returnedPartitions.isEmpty()) {
       splitToBeServed = returnedPartitions.removeFirst();
