@@ -29,7 +29,7 @@ public class TransformationOperator extends ProcessFunction<ExecutionRecord, Exe
 
     @Override
     public void processElement(ExecutionRecord sourceExecutionRecord, ProcessFunction<ExecutionRecord, ExecutionRecordResult>.Context ctx, Collector<ExecutionRecordResult> out) throws Exception {
-
+        ExecutionRecordResult result;
         try {
             final XsltTransformer xsltTransformer = prepareXsltTransformer();
 
@@ -38,27 +38,24 @@ public class TransformationOperator extends ProcessFunction<ExecutionRecord, Exe
                             sourceExecutionRecord.getRecordData().getBytes(StandardCharsets.UTF_8),
                             prepareEuropeanaGeneratedIdsMap(sourceExecutionRecord));
 
-            out.collect(
-                    ExecutionRecordResult.from(
-                            sourceExecutionRecord,
-                            parameterTool.get(JobParamName.TASK_ID),
-                            JobName.TRANSFORMATION,
-                            writer.toString(),
-                            null)
-            );
-
-            LOGGER.debug("Processed record, id: {}", sourceExecutionRecord.getExecutionRecordKey().getRecordId());
+            result = ExecutionRecordResult.from(
+                sourceExecutionRecord,
+                parameterTool.get(JobParamName.TASK_ID),
+                JobName.TRANSFORMATION,
+                writer.toString(),
+                null);
+            LOGGER.debug("Transformed record, id: {}", sourceExecutionRecord.getExecutionRecordKey().getRecordId());
         } catch (Exception e) {
             LOGGER.warn("{} exception: {}", getClass().getName(), sourceExecutionRecord.getExecutionRecordKey().getRecordId(), e);
-            out.collect(
-                    ExecutionRecordResult.from(
-                            sourceExecutionRecord,
-                            parameterTool.get(JobParamName.TASK_ID),
-                            JobName.TRANSFORMATION,
-                            "",
-                            e.getMessage())
-            );
+            result = ExecutionRecordResult.from(
+                sourceExecutionRecord,
+                parameterTool.get(JobParamName.TASK_ID),
+                JobName.TRANSFORMATION,
+                "",
+                e.getMessage());
         }
+
+        out.collect(result);
     }
 
     private XsltTransformer prepareXsltTransformer()
