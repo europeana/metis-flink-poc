@@ -42,7 +42,7 @@ public class DbSinkFunction extends RichSinkFunction<ExecutionRecordResult> {
 
     @Override
     public void invoke(ExecutionRecordResult executionRecordResult, Context context) throws Exception {
-        if (Math.random() < 0.02) {
+        if (Math.random() < 0.01) {
             throw new RuntimeException("Sink failed on the saving record!");
         }
 
