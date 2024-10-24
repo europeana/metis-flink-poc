@@ -60,7 +60,7 @@ To only update application code only the last image need to be built.
     kubectl create -f jobmanager-ingress.yaml  
     kubectl create -f jobmanager-checkpoints-volume.yaml  
     kubectl create -f jobmanager-checkpoints-volume-claim.yaml  
-    kubectl create -f jobmanager-session-deployment-non-ha.yaml  
+    kubectl create -f jobmanager-session-deployment.yaml  
     kubectl create -f taskmanager-session-deployment.yaml
     ```  
 
